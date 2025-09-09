@@ -474,7 +474,7 @@ char *aal_setdot(const char *X, const char *P)
 
     long idx = (long)(unsigned char)P[0];
     size_t n = strlen(X);
-    if (idx < 0 || (size_t)idx > n)
+    if ((size_t)idx > n)
         idx = n;
 
     char *out = aal_mem_alloc_num(n + 1);
