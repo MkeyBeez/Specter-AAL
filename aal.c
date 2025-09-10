@@ -5,667 +5,983 @@
 /*                            Copyright © 2010-2025                           */
 /******************************************************************************/
 
-#include "aal.h"
+
+
+/* Headers */
+#include "headers/aal.h"
 
 /* AAL - Length */
-size_t aal_length(const char *str) {
-    if (str == NULL) {
+size_t aal_len(const char *X)
+{
+    const char *P;
+    
+    if (X == NULL)
         return 0;
-    }
-    return strlen(str);
+    
+    P = X;
+    
+    while (*P != '\0')
+        P++;
+    
+    return (P - X);
 }
 
-/* AAL - Copy substring starting at position */
-char *aal_copy_from_position(const char *source, size_t position) {
-    if (source == NULL) {
+/* AAL - Copy */
+char *aal_copy(const char *S, size_t P)
+{
+    char *CRes;
+    size_t LenS;
+    size_t i;
+    
+    if (S == NULL)
         return NULL;
-    }
     
-    size_t source_len = aal_length(source);
-    if (position >= source_len) {
+    LenS = aal_len(S);
+    
+    if (P >= LenS)
         return NULL;
-    }
     
-    char *result = aal_allocate_like_string(source);
-    if (result == NULL) {
+    CRes = aal_mem_alloc_num(LenS - P + 1);
+    if (CRes == NULL)
         return NULL;
+    
+    i = 0;
+    while ((P + i) < LenS && (isdigit(S[P + i]) || S[P + i] == '-' || S[P + i] == '.'))
+    {
+        CRes[i] = S[P + i];
+        i++;
     }
     
-    size_t result_index = 0;
-    for (size_t i = position; i < source_len; i++) {
-        char current_char = source[i];
-        if (isdigit(current_char) || current_char == '-' || current_char == '.') {
-            result[result_index++] = current_char;
-        } else {
-            break;
-        }
-    }
+    CRes[i] = '\0';
     
-    result[result_index] = '\0';
-    return result;
+    return CRes;
 }
 
-/* AAL - Compare two number strings */
-aal_comparison_t aal_compare(const char *a, const char *b) {
-    if (a == NULL || b == NULL) {
-        return AAL_EQUAL;
+/* AAL - Compare */
+char aal_cmp(const char *A, const char *B)
+{
+    char Bigger;
+    size_t i;
+    char MinA;
+    char MinB;
+    char ZeroA;
+    char ZeroB;
+    size_t LenA; 
+    size_t LenB;
+    
+    Bigger = '0';
+    
+    if (A == NULL || B == NULL)
+        return Bigger;
+    
+    char *CleanA = aal_clrizr(A);
+    char *CleanB = aal_clrizr(B);
+    
+    ZeroA = aal_zrchk(CleanA);
+    ZeroB = aal_zrchk(CleanB);
+
+    if (ZeroA == '1' && ZeroB == '1')
+    {
+        aal_mem_dealloc(CleanA);
+        aal_mem_dealloc(CleanB);
+        return Bigger;
     }
     
-    char *clean_a = aal_clear_leading_zeros(a);
-    char *clean_b = aal_clear_leading_zeros(b);
+    LenA = aal_len(CleanA);
+    LenB = aal_len(CleanB);
     
-    if (clean_a == NULL || clean_b == NULL) {
-        aal_free_string(clean_a);
-        aal_free_string(clean_b);
-        return AAL_EQUAL;
+    MinA = aal_minchk(CleanA);
+    MinB = aal_minchk(CleanB);
+    
+    if (LenA > LenB)
+    {
+        if (MinA == '1')
+            Bigger = '2';
+        else
+            Bigger = '1';
     }
-    
-    bool zero_a = aal_is_zero(clean_a);
-    bool zero_b = aal_is_zero(clean_b);
-    
-    if (zero_a && zero_b) {
-        aal_free_string(clean_a);
-        aal_free_string(clean_b);
-        return AAL_EQUAL;
+    else if (LenA < LenB)
+    {
+        if (MinB == '1')
+            Bigger = '1';
+        else
+            Bigger = '2';
     }
-    
-    size_t len_a = aal_length(clean_a);
-    size_t len_b = aal_length(clean_b);
-    bool minus_a = aal_has_minus_sign(clean_a);
-    bool minus_b = aal_has_minus_sign(clean_b);
-    
-    aal_comparison_t result = AAL_EQUAL;
-    
-    // Handle sign differences
-    if (minus_a && !minus_b) {
-        result = AAL_SECOND_GREATER;
-    } else if (!minus_a && minus_b) {
-        result = AAL_FIRST_GREATER;
-    } else {
-        // Same signs, compare by length and digits
-        if (len_a > len_b) {
-            result = minus_a ? AAL_SECOND_GREATER : AAL_FIRST_GREATER;
-        } else if (len_a < len_b) {
-            result = minus_b ? AAL_FIRST_GREATER : AAL_SECOND_GREATER;
-        } else {
-            // Same length, compare digit by digit
-            for (size_t i = 0; i < len_a; i++) {
-                if (clean_a[i] > clean_b[i]) {
-                    result = minus_a ? AAL_SECOND_GREATER : AAL_FIRST_GREATER;
-                    break;
-                } else if (clean_a[i] < clean_b[i]) {
-                    result = minus_b ? AAL_FIRST_GREATER : AAL_SECOND_GREATER;
-                    break;
-                }
+    else
+    {
+        for (i = 0; i < LenA; i++)
+        {
+            if (CleanA[i] > CleanB[i])
+            {
+                if (MinA == '1')
+                    Bigger = '2';
+                else
+                    Bigger = '1';
+                
+                break;
+            }
+            else if (CleanA[i] < CleanB[i])
+            {
+                if (MinB == '1')
+                    Bigger = '1';
+                else
+                    Bigger = '2';
+                
+                break;
             }
         }
     }
     
-    aal_free_string(clean_a);
-    aal_free_string(clean_b);
-    return result;
+    aal_mem_dealloc(CleanA);
+    aal_mem_dealloc(CleanB);
+    
+    return Bigger;
 }
 
-/* AAL - Reverse string */
-char *aal_reverse(const char *str) {
-    if (str == NULL) {
-        return NULL;
-    }
+/* AAL - Reverse */
+char *aal_rvrs(const char *X)
+{
+    char *RevStr;
+    size_t LenX;
+    size_t i;
     
-    size_t len = aal_length(str);
-    char *reversed = aal_allocate_string(len + 1);
-    if (reversed == NULL) {
+    if (X == NULL)
         return NULL;
-    }
     
-    if (len <= 1) {
-        strcpy(reversed, str);
-    } else {
-        for (size_t i = 0; i < len; i++) {
-            reversed[i] = str[len - i - 1];
+    LenX = aal_len(X);
+    RevStr = aal_mem_alloc_num(LenX + 1);
+    if (RevStr == NULL)
+        return NULL;
+    
+    if (LenX > 1)
+    {
+        for (i = 0; i < LenX; i++)
+        {
+            RevStr[i] = X[LenX - i - 1];
         }
     }
+    else
+    {
+        strcpy(RevStr, X);
+    }
     
-    reversed[len] = '\0';
-    return reversed;
+    RevStr[LenX] = '\0';
+    
+    return RevStr;
 }
 
-/* AAL - Pad string with prefix */
-char *aal_pad_prefix(const char *str, const char *prefix) {
-    if (str == NULL || prefix == NULL) {
+/* AAL - Padding */
+char *aal_pad(const char *X, const char *S)
+{
+    char *PadStr;
+    size_t LenX;
+    size_t LenS;
+    size_t i;
+    
+    if (X == NULL || S == NULL)
         return NULL;
+    
+    LenX = aal_len(X);
+    LenS = aal_len(S);
+    
+    PadStr = aal_mem_alloc_num(LenX + LenS + 1);
+    if (PadStr == NULL)
+        return NULL;
+    
+    for (i = 0; i < LenS; i++)
+    {
+        PadStr[i] = S[i];
     }
     
-    size_t str_len = aal_length(str);
-    size_t prefix_len = aal_length(prefix);
-    
-    char *padded = aal_allocate_string(str_len + prefix_len + 1);
-    if (padded == NULL) {
-        return NULL;
+    for (i = 0; i < LenX; i++)
+    {
+        PadStr[LenS + i] = X[i];
     }
     
-    strcpy(padded, prefix);
-    strcat(padded, str);
+    PadStr[LenX + LenS] = '\0';
     
-    return padded;
+    return PadStr;
 }
 
-/* AAL - Check if string represents zero */
-bool aal_is_zero(const char *str) {
-    if (str == NULL) {
-        return false;
+/* AAL - Zero Check */
+char aal_zrchk(const char *X)
+{
+    char Zero;
+    size_t i;
+    size_t Tracer;
+    size_t LenX;
+    char *CleanX;
+
+    if (X == NULL)
+        return '0';
+    
+    CleanX = aal_clrmin(X);
+    LenX = aal_len(CleanX);
+    
+    Zero = '0';
+    Tracer = 0;
+    
+    for (i = 0; i < LenX; i++)
+    {
+        if (CleanX[i] == '0')
+            Tracer++;
     }
     
-    char *abs_str = aal_clear_minus_sign(str);
-    if (abs_str == NULL) {
-        return false;
-    }
+    aal_mem_dealloc(CleanX);
     
-    bool is_zero = true;
-    size_t len = aal_length(abs_str);
+    if (Tracer == LenX)
+        Zero = '1';
     
-    for (size_t i = 0; i < len; i++) {
-        if (abs_str[i] != '0' && abs_str[i] != '.') {
-            is_zero = false;
+    return Zero;
+}
+
+/* AAL - Clear Initial Zeroes */
+char *aal_clrizr(const char *X)
+{
+    char Flag;
+    size_t i;
+    char *ClrStr;
+    size_t LenX;
+    
+    if (X == NULL)
+        return NULL;
+    
+    LenX = aal_len(X);
+    Flag = '0';
+    
+    for (i = 0; i < LenX; i++)
+    {
+        if (X[i] != '0' && (isdigit(X[i]) || X[i] == '-' || X[i] == '.'))
+        {
+            ClrStr = aal_copy(X, i);
+            Flag = '1';
             break;
         }
     }
     
-    aal_free_string(abs_str);
-    return is_zero;
-}
-
-/* AAL - Clear leading zeros */
-char *aal_clear_leading_zeros(const char *str) {
-    if (str == NULL) {
-        return NULL;
-    }
-    
-    size_t len = aal_length(str);
-    size_t start = 0;
-    
-    // Skip leading zeros, but preserve minus sign
-    if (len > 0 && str[0] == '-') {
-        start = 1;
-    }
-    
-    while (start < len && str[start] == '0') {
-        start++;
-    }
-    
-    // If we've consumed all digits, keep one zero
-    if (start == len || (start < len && !isdigit(str[start]) && str[start] != '.')) {
-        start--;
-    }
-    
-    char *result = aal_copy_from_position(str, start > 0 ? start : 0);
-    
-    // Handle the case where we need to preserve the minus sign
-    if (str[0] == '-' && result != NULL && result[0] != '-') {
-        char *temp = aal_set_minus_sign(result);
-        aal_free_string(result);
-        result = temp;
-    }
-    
-    // Ensure we have at least "0" for zero values
-    int decimal_pos = aal_find_decimal_point(result);
-    if (result != NULL && decimal_pos == 0) {
-        char *temp = aal_pad_prefix(result, "0");
-        aal_free_string(result);
-        result = temp;
-    }
-    
-    return result;
-}
-
-/* AAL - Check for minus sign */
-bool aal_has_minus_sign(const char *str) {
-    return (str != NULL && str[0] == '-');
-}
-
-/* AAL - Add minus sign */
-char *aal_set_minus_sign(const char *str) {
-    if (str == NULL) {
-        return NULL;
-    }
-    
-    return aal_pad_prefix(str, "-");
-}
-
-/* AAL - Remove minus sign */
-char *aal_clear_minus_sign(const char *str) {
-    if (str == NULL || !aal_has_minus_sign(str)) {
-        if (str == NULL) return NULL;
-        
-        char *result = aal_allocate_like_string(str);
-        if (result != NULL) {
-            strcpy(result, str);
+    if (Flag == '0')
+    {
+        ClrStr = aal_mem_alloc_num(2);
+        if (ClrStr != NULL)
+        {
+            ClrStr[0] = '0';
+            ClrStr[1] = '\0';
         }
-        return result;
+        return ClrStr;
     }
     
-    size_t len = aal_length(str);
-    char *result = aal_allocate_string(len);
-    if (result == NULL) {
-        return NULL;
+    if (aal_dotchk(ClrStr) == (size_t)-1)
+    {
+        char *Temp = aal_pad(ClrStr, "0");
+        aal_mem_dealloc(ClrStr);
+        ClrStr = Temp;
     }
     
-    strcpy(result, str + 1);
-    return result;
+    return ClrStr;
 }
 
-/* AAL - Find decimal point position */
-int aal_find_decimal_point(const char *str) {
-    if (str == NULL) {
-        return -1;
-    }
+/* AAL - Minus Check (Minus Sign) */
+char aal_minchk(const char *X)
+{
+    if (X == NULL || X[0] == '\0')
+        return '0';
     
-    for (size_t i = 0; str[i] != '\0'; i++) {
-        if (str[i] == '.') {
-            return (int)i;
-        }
-    }
-    
-    return -1;
+    return (X[0] == '-') ? '1' : '0';
 }
 
-/* AAL - Insert decimal point at position */
-char *aal_set_decimal_point(const char *str, size_t position) {
-    if (str == NULL) {
+/* AAL - Set Minus Sign */
+char *aal_setmin(const char *X)
+{
+    char *FinNum;
+    size_t LenX;
+    size_t i;
+    
+    if (X == NULL)
         return NULL;
+    
+    LenX = aal_len(X);
+    FinNum = aal_mem_alloc_num(LenX + 2);
+    if (FinNum == NULL)
+        return NULL;
+    
+    FinNum[0] = '-';
+    
+    for (i = 0; i < LenX; i++)
+    {
+        FinNum[i + 1] = X[i];
     }
     
-    size_t len = aal_length(str);
-    if (position > len) {
-        return NULL;
-    }
+    FinNum[LenX + 1] = '\0';
     
-    char *result = aal_allocate_string(len + 2);
-    if (result == NULL) {
-        return NULL;
-    }
-    
-    strncpy(result, str, position);
-    result[position] = '.';
-    strcpy(result + position + 1, str + position);
-    
-    return result;
+    return FinNum;
 }
 
-/* AAL - Remove decimal point */
-char *aal_clear_decimal_point(const char *str) {
-    if (str == NULL) {
+/* AAL - Clear Minus Sign */
+char *aal_clrmin(const char *X)
+{
+    char *AbsNum;
+    size_t LenX;
+    size_t i;
+    
+    if (X == NULL)
         return NULL;
+    
+    if (aal_minchk(X) == '0')
+    {
+        AbsNum = aal_mem_alloc_num(aal_len(X) + 1);
+        if (AbsNum != NULL)
+            strcpy(AbsNum, X);
+        return AbsNum;
     }
     
-    int dot_pos = aal_find_decimal_point(str);
-    if (dot_pos < 0) {
-        char *result = aal_allocate_like_string(str);
-        if (result != NULL) {
-            strcpy(result, str);
-        }
-        return result;
-    }
-    
-    size_t len = aal_length(str);
-    char *result = aal_allocate_string(len);
-    if (result == NULL) {
+    LenX = aal_len(X);
+    AbsNum = aal_mem_alloc_num(LenX);
+    if (AbsNum == NULL)
         return NULL;
+    
+    for (i = 1; i < LenX; i++)
+    {
+        AbsNum[i - 1] = X[i];
     }
     
-    strncpy(result, str, (size_t)dot_pos);
-    strcpy(result + dot_pos, str + dot_pos + 1);
+    AbsNum[LenX - 1] = '\0';
     
-    return result;
+    return AbsNum;
 }
 
-/* AAL - Equalize string lengths with padding */
-aal_fixlen_t aal_equalize_lengths(const char *a, const char *b) {
-    aal_fixlen_t result = {AAL_EQUAL, NULL, NULL, 0};
+/* AAL - Dot Check (Comma Sign) */
+size_t aal_dotchk(const char *X)
+{
+    size_t i;
+    size_t LenX;
     
-    if (a == NULL || b == NULL) {
-        result.error = AAL_ERROR_NULL_POINTER;
-        return result;
+    if (X == NULL)
+        return (size_t)-1;
+    
+    LenX = aal_len(X);
+    
+    for (i = 0; i < LenX; i++)
+    {
+        if (X[i] == '.')
+            return i;
     }
     
-    size_t len_a = aal_length(a);
-    size_t len_b = aal_length(b);
-    
-    if (len_a > len_b) {
-        size_t diff = len_a - len_b;
-        char *zeros = aal_allocate_string(diff + 1);
-        if (zeros == NULL) {
-            result.error = AAL_ERROR_MEMORY_ALLOCATION;
-            return result;
-        }
-        
-        for (size_t i = 0; i < diff; i++) {
-            zeros[i] = '0';
-        }
-        zeros[diff] = '\0';
-        
-        result.bigger = AAL_FIRST_GREATER;
-        result.num1 = aal_allocate_like_string(a);
-        result.num2 = aal_pad_prefix(b, zeros);
-        result.final_length = len_a;
-        
-        if (result.num1 != NULL) strcpy(result.num1, a);
-        aal_free_string(zeros);
-        
-    } else if (len_a < len_b) {
-        size_t diff = len_b - len_a;
-        char *zeros = aal_allocate_string(diff + 1);
-        if (zeros == NULL) {
-            result.error = AAL_ERROR_MEMORY_ALLOCATION;
-            return result;
-        }
-        
-        for (size_t i = 0; i < diff; i++) {
-            zeros[i] = '0';
-        }
-        zeros[diff] = '\0';
-        
-        result.bigger = AAL_SECOND_GREATER;
-        result.num1 = aal_pad_prefix(a, zeros);
-        result.num2 = aal_allocate_like_string(b);
-        result.final_length = len_b;
-        
-        if (result.num2 != NULL) strcpy(result.num2, b);
-        aal_free_string(zeros);
-        
-    } else {
-        result.bigger = AAL_EQUAL;
-        result.num1 = aal_allocate_like_string(a);
-        result.num2 = aal_allocate_like_string(b);
-        result.final_length = len_a;
-        
-        if (result.num1 != NULL) strcpy(result.num1, a);
-        if (result.num2 != NULL) strcpy(result.num2, b);
-    }
-    
-    return result;
+    return (size_t)-1;
 }
 
-/* AAL - Read two numbers from file */
-aal_rdfile_t aal_read_file(const char *filename) {
-    aal_rdfile_t result = {NULL, NULL, AAL_SUCCESS};
+/* AAL - Set Dot (Comma Sign) */
+char *aal_setdot(const char *X, size_t Pos)
+{
+    char *RealNum;
+    size_t LenX;
+    size_t i;
+    size_t j;
     
-    if (filename == NULL) {
-        result.error = AAL_ERROR_NULL_POINTER;
-        return result;
-    }
+    if (X == NULL || Pos > aal_len(X))
+        return NULL;
     
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        result.error = AAL_ERROR_FILE_IO;
-        return result;
-    }
+    LenX = aal_len(X);
+    RealNum = aal_mem_alloc_num(LenX + 2);
+    if (RealNum == NULL)
+        return NULL;
     
-    // Get file size
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    rewind(file);
-    
-    if (file_size < 3) {
-        result.error = AAL_ERROR_INVALID_INPUT;
-        fclose(file);
-        return result;
-    }
-    
-    char *file_content = aal_allocate_string((size_t)file_size + 1);
-    if (file_content == NULL) {
-        result.error = AAL_ERROR_MEMORY_ALLOCATION;
-        fclose(file);
-        return result;
-    }
-    
-    size_t bytes_read = fread(file_content, 1, (size_t)file_size, file);
-    file_content[bytes_read] = '\0';
-    fclose(file);
-    
-    // Find separator ':'
-    char *separator = strchr(file_content, ':');
-    if (separator == NULL) {
-        result.error = AAL_ERROR_INVALID_INPUT;
-        aal_free_string(file_content);
-        return result;
-    }
-    
-    *separator = '\0';  // Split string at separator
-    
-    result.num1 = aal_allocate_string(strlen(file_content) + 1);
-    result.num2 = aal_allocate_string(strlen(separator + 1) + 1);
-    
-    if (result.num1 == NULL || result.num2 == NULL) {
-        result.error = AAL_ERROR_MEMORY_ALLOCATION;
-        aal_free_string(result.num1);
-        aal_free_string(result.num2);
-        result.num1 = result.num2 = NULL;
-    } else {
-        strcpy(result.num1, file_content);
-        strcpy(result.num2, separator + 1);
-    }
-    
-    aal_free_string(file_content);
-    return result;
-}
-
-/* AAL - Validate single number string */
-aal_error_t aal_validate_number(const char *str) {
-    if (str == NULL) {
-        return AAL_ERROR_NULL_POINTER;
-    }
-    
-    size_t len = aal_length(str);
-    if (len == 0) {
-        return AAL_ERROR_INVALID_INPUT;
-    }
-    
-    bool has_dot = false;
-    
-    for (size_t i = 0; i < len; i++) {
-        if (isdigit(str[i])) {
-            continue;
-        } else if (str[i] == '-' && i == 0) {
-            continue;
-        } else if (str[i] == '.' && !has_dot && i != 0 && i != len - 1) {
-            has_dot = true;
-        } else {
-            return AAL_ERROR_INVALID_INPUT;
+    for (i = 0, j = 0; i <= LenX; i++, j++)
+    {
+        if (i == Pos)
+        {
+            RealNum[j] = '.';
+            j++;
+        }
+        if (i < LenX)
+        {
+            RealNum[j] = X[i];
         }
     }
     
-    return AAL_SUCCESS;
-}
-
-/* AAL - Validate two number strings */
-aal_error_t aal_validate_two_numbers(const char *a, const char *b) {
-    aal_error_t error_a = aal_validate_number(a);
-    if (error_a != AAL_SUCCESS) {
-        return error_a;
-    }
+    RealNum[LenX + 1] = '\0';
     
-    return aal_validate_number(b);
+    return RealNum;
 }
 
-/* AAL - Memory allocation helpers */
-char *aal_allocate_string(size_t length) {
-    return calloc(length, sizeof(char));
-}
-
-char *aal_allocate_like_string(const char *str) {
-    if (str == NULL) {
+/* AAL - Clear Dot (Comma Sign) */
+char *aal_clrdot(const char *X)
+{
+    char *IntNum;
+    size_t DotPos;
+    size_t LenX;
+    size_t i;
+    size_t j;
+    
+    if (X == NULL)
         return NULL;
+    
+    DotPos = aal_dotchk(X);
+    if (DotPos == (size_t)-1)
+    {
+        IntNum = aal_mem_alloc_num(aal_len(X) + 1);
+        if (IntNum != NULL)
+            strcpy(IntNum, X);
+        return IntNum;
     }
-    return aal_allocate_string(aal_length(str) + 1);
-}
-
-char *aal_allocate_for_two_strings(const char *a, const char *b) {
-    if (a == NULL || b == NULL) {
+    
+    LenX = aal_len(X);
+    IntNum = aal_mem_alloc_num(LenX);
+    if (IntNum == NULL)
         return NULL;
+    
+    for (i = 0, j = 0; i < LenX; i++)
+    {
+        if (i != DotPos)
+        {
+            IntNum[j] = X[i];
+            j++;
+        }
     }
     
-    size_t len_a = aal_length(a);
-    size_t len_b = aal_length(b);
-    size_t max_len = (len_a >= len_b) ? len_a : len_b;
+    IntNum[j] = '\0';
     
-    return aal_allocate_string(max_len + 3);  // Extra space for operations
+    return IntNum;
 }
 
-/* AAL - Memory deallocation */
-void aal_free_string(char *str) {
-    if (str != NULL) {
-        free(str);
+/* AAL - Fixate Numbers Length */
+fixlen aal_fixlen(const char *A, const char *B)
+{
+    size_t DifLen;
+    size_t LenA;
+    size_t LenB;
+    fixlen locfxlnrs = {'0', NULL, NULL, 0};
+    char *Tmp;
+    size_t i;
+    
+    if (A == NULL || B == NULL)
+        return locfxlnrs;
+    
+    LenA = aal_len(A);
+    LenB = aal_len(B);
+    
+    if (LenA > LenB)
+    {
+        DifLen = LenA - LenB;
+        Tmp = aal_mem_alloc_num(DifLen + 1);
+        if (Tmp == NULL)
+            return locfxlnrs;
+        
+        for (i = 0; i < DifLen; i++)
+        {
+            Tmp[i] = '0';
+        }
+        Tmp[DifLen] = '\0';
+        
+        locfxlnrs.Bigger = '1';
+        locfxlnrs.Num1 = (char *)A;
+        locfxlnrs.Num2 = aal_pad(B, Tmp);
+        locfxlnrs.FinLen = LenA;
+        
+        aal_mem_dealloc(Tmp);
     }
+    else if (LenA < LenB)
+    {
+        DifLen = LenB - LenA;
+        Tmp = aal_mem_alloc_num(DifLen + 1);
+        if (Tmp == NULL)
+            return locfxlnrs;
+        
+        for (i = 0; i < DifLen; i++)
+        {
+            Tmp[i] = '0';
+        }
+        Tmp[DifLen] = '\0';
+        
+        locfxlnrs.Bigger = '2';
+        locfxlnrs.Num1 = aal_pad(A, Tmp);
+        locfxlnrs.Num2 = (char *)B;
+        locfxlnrs.FinLen = LenB;
+        
+        aal_mem_dealloc(Tmp);
+    }
+    else
+    {
+        locfxlnrs.Bigger = '0';
+        locfxlnrs.Num1 = (char *)A;
+        locfxlnrs.Num2 = (char *)B;
+        locfxlnrs.FinLen = LenA;
+    }
+    
+    return locfxlnrs;
 }
 
-void aal_free_fixlen_result(aal_fixlen_t *result) {
-    if (result != NULL) {
-        aal_free_string(result->num1);
-        aal_free_string(result->num2);
-        result->num1 = result->num2 = NULL;
+/* AAL - Read File */
+rdflout aal_rdfl(const char *Z)
+{
+    unsigned long i;
+    unsigned long flsz;
+    char *FlStrm;
+    size_t file_res;
+    rdflout locrdflout = {NULL, NULL};
+    FILE *FP;
+    
+    if (Z == NULL)
+        return locrdflout;
+    
+    FP = fopen(Z, "r");
+    
+    if (FP == NULL)
+    {
+        locrdflout.Num1 = "ERROR";
+        locrdflout.Num2 = "ERROR";
+        return locrdflout;
     }
+    
+    fseek(FP, 0, SEEK_END);
+    flsz = ftell(FP);
+    rewind(FP);
+    
+    if (flsz < 3)
+    {
+        fclose(FP);
+        locrdflout.Num1 = "ERROR";
+        locrdflout.Num2 = "ERROR";
+        return locrdflout;
+    }
+    
+    FlStrm = aal_mem_alloc_num(flsz + 1);
+    if (FlStrm == NULL)
+    {
+        fclose(FP);
+        return locrdflout;
+    }
+    
+    file_res = fread(FlStrm, 1, flsz, FP);
+    FlStrm[flsz] = '\0';
+    
+    if (file_res != flsz)
+    {
+        aal_mem_dealloc(FlStrm);
+        fclose(FP);
+        locrdflout.Num1 = "ERROR";
+        locrdflout.Num2 = "ERROR";
+        return locrdflout;
+    }
+    
+    i = 0;
+    while (FlStrm[i] != ':' && FlStrm[i] != '\0')
+        i++;
+    
+    if (FlStrm[i] == ':')
+    {
+        locrdflout.Num1 = aal_copy(FlStrm, 0);
+        locrdflout.Num2 = aal_copy(FlStrm, i + 1);
+    }
+    else
+    {
+        locrdflout.Num1 = "ERROR";
+        locrdflout.Num2 = "ERROR";
+    }
+    
+    aal_mem_dealloc(FlStrm);
+    fclose(FP);
+    
+    return locrdflout;
 }
 
-void aal_free_rdfile_result(aal_rdfile_t *result) {
-    if (result != NULL) {
-        aal_free_string(result->num1);
-        aal_free_string(result->num2);
-        result->num1 = result->num2 = NULL;
+/* AAL - Error Check (1 Argument) */
+char aal_errchk_1(const char *X)
+{
+    short int Check;
+    char Dot;
+    char Err;
+    size_t i;
+    size_t LenX;
+    
+    if (X == NULL)
+        return '1';
+    
+    LenX = aal_len(X);
+    Dot = '0';
+    Err = '0';
+    
+    for (i = 0; i < LenX; i++)
+    {
+        Check = isdigit((unsigned char)X[i]);
+        
+        if (Check == 0)
+        {
+            if ((i == 0 && X[i] != '-') || 
+                (i > 0 && X[i] != '.') || 
+                (i == LenX - 1 && X[i] == '.') || 
+                (X[i] == '.' && Dot == '1'))
+            {
+                Err = '1';
+                break;
+            }
+            
+            if (X[i] == '.')
+                Dot = '1';
+        }
     }
+    
+    return Err;
+}
+
+/* AAL - Error Check (2 Arguments) */
+char aal_errchk_2(const char *A, const char *B)
+{
+    char Err;
+    
+    if (A == NULL || B == NULL)
+        return '1';
+    
+    Err = aal_errchk_1(A);
+    
+    if (Err == '0')
+        Err = aal_errchk_1(B);
+    
+    return Err;
+}
+
+/* AAL - Memory Allocator (1 Argument) */
+char *aal_mem_alloc_num(size_t V)
+{
+    if (V == 0)
+        return NULL;
+    
+    return calloc(V + 1, sizeof(char));
+}
+
+/* AAL - Memory Allocator (1 Argument) */
+char *aal_mem_alloc_1(const char *A)
+{
+    if (A == NULL)
+        return NULL;
+    
+    return aal_mem_alloc_num(aal_len(A));
+}
+
+/* AAL - Memory Allocator (2 Arguments) */
+char *aal_mem_alloc_2(const char *A, const char *B)
+{
+    size_t LenA;
+    size_t LenB;
+    
+    if (A == NULL || B == NULL)
+        return NULL;
+    
+    LenA = aal_len(A);
+    LenB = aal_len(B);
+    
+    if (LenA >= LenB)
+        return aal_mem_alloc_num(LenA + 2);
+    else
+        return aal_mem_alloc_num(LenB + 2);
+}
+
+/* AAL - Memory Deallocator */
+int aal_mem_dealloc(char *S)
+{
+    if (S != NULL)
+        free(S);
+    
+    return 1;
 }
 
 /* AAL - Addition */
-char *aal_add(const char *a, const char *b) {
-    if (aal_validate_two_numbers(a, b) != AAL_SUCCESS) {
+char *aal_add(const char *A, const char *B)
+{
+    short int k;
+    char TmpA;
+    char TmpB;
+    char Flag;
+    size_t i;
+    char *S;
+    char *T;
+    char *SS;
+    char *CS;
+    char *Result;
+    fixlen newfxlnrs;
+    
+    if (A == NULL || B == NULL)
+        return NULL;
+    
+    S = aal_mem_alloc_num(3);
+    T = aal_mem_alloc_num(3);
+    SS = aal_mem_alloc_2(A, B);
+    CS = aal_mem_alloc_2(A, B);
+    Result = aal_mem_alloc_2(A, B);
+    
+    if (S == NULL || T == NULL || SS == NULL || CS == NULL || Result == NULL)
+    {
+        aal_mem_dealloc(S);
+        aal_mem_dealloc(T);
+        aal_mem_dealloc(SS);
+        aal_mem_dealloc(CS);
+        aal_mem_dealloc(Result);
         return NULL;
     }
     
-    aal_fixlen_t equalized = aal_equalize_lengths(a, b);
-    if (equalized.num1 == NULL || equalized.num2 == NULL) {
-        aal_free_fixlen_result(&equalized);
+    Flag = '0';
+    
+    newfxlnrs = aal_fixlen(A, B);
+    if (newfxlnrs.Num1 == NULL || newfxlnrs.Num2 == NULL)
+    {
+        aal_mem_dealloc(S);
+        aal_mem_dealloc(T);
+        aal_mem_dealloc(SS);
+        aal_mem_dealloc(CS);
+        aal_mem_dealloc(Result);
         return NULL;
     }
     
-    char *result = aal_allocate_for_two_strings(equalized.num1, equalized.num2);
-    if (result == NULL) {
-        aal_free_fixlen_result(&equalized);
-        return NULL;
-    }
-    
-    int carry = 0;
-    size_t result_index = 0;
-    
-    // Process from right to left
-    for (int i = (int)equalized.final_length - 1; i >= 0; i--) {
-        int digit_a = equalized.num1[i] - '0';
-        int digit_b = equalized.num2[i] - '0';
-        int sum = digit_a + digit_b + carry;
+    for (i = 0; i < newfxlnrs.FinLen; i++)
+    {
+        TmpA = newfxlnrs.Num1[newfxlnrs.FinLen - i - 1];
+        TmpB = newfxlnrs.Num2[newfxlnrs.FinLen - i - 1];
         
-        if (sum > 9) {
-            carry = 1;
-            sum -= 10;
-        } else {
-            carry = 0;
+        if (i > 0)
+        {
+            k = ((TmpA - '0') + (TmpB - '0') + (CS[i - 1] - '0'));
+            
+            if (k > 9)
+            {
+                S[0] = '1';
+                S[1] = (k - 10) + '0';
+                S[2] = '\0';
+            }
+            else
+            {
+                S[0] = k + '0';
+                S[1] = '\0';
+            }
+        }
+        else
+        {
+            k = (TmpA - '0') + (TmpB - '0');
+            
+            if (k > 9)
+            {
+                S[0] = '1';
+                S[1] = (k - 10) + '0';
+                S[2] = '\0';
+            }
+            else
+            {
+                S[0] = k + '0';
+                S[1] = '\0';
+            }
         }
         
-        result[result_index++] = (char)(sum + '0');
+        SS[i] = (S[1] != '\0') ? S[1] : S[0];
+        
+        if (k > 9)
+            CS[i] = '1';
+        else
+            CS[i] = '0';
+        
+        if (i == newfxlnrs.FinLen - 1)
+        {
+            if (Flag == '1')
+            {
+                T = aal_rvrs(S);
+                if (T != NULL)
+                {
+                    strncpy(&Result[i], T, 3);
+                    aal_mem_dealloc(T);
+                }
+            }
+            else
+            {
+                strncpy(&Result[i], S, 3);
+            }
+        }
+        else
+        {
+            Flag = '1';
+            Result[i] = SS[i];
+        }
     }
     
-    if (carry > 0) {
-        result[result_index++] = '1';
+    if (Flag == '1')
+    {
+        char *Reversed = aal_rvrs(Result);
+        if (Reversed != NULL)
+        {
+            strcpy(Result, Reversed);
+            aal_mem_dealloc(Reversed);
+        }
     }
     
-    result[result_index] = '\0';
+    aal_mem_dealloc(S);
+    aal_mem_dealloc(T);
+    aal_mem_dealloc(SS);
+    aal_mem_dealloc(CS);
     
-    // Reverse the result
-    char *final_result = aal_reverse(result);
-    aal_free_string(result);
-    aal_free_fixlen_result(&equalized);
+    if (newfxlnrs.Bigger != '0' && newfxlnrs.Num1 != A && newfxlnrs.Num1 != B)
+        aal_mem_dealloc((char *)newfxlnrs.Num1);
+    if (newfxlnrs.Bigger != '0' && newfxlnrs.Num2 != A && newfxlnrs.Num2 != B)
+        aal_mem_dealloc((char *)newfxlnrs.Num2);
     
-    // Clear leading zeros
-    char *cleaned_result = aal_clear_leading_zeros(final_result);
-    aal_free_string(final_result);
-    
-    return cleaned_result;
+    return aal_clrizr(Result);
 }
 
 /* AAL - Subtraction */
-char *aal_subtract(const char *a, const char *b) {
-    if (aal_validate_two_numbers(a, b) != AAL_SUCCESS) {
+char *aal_sub(const char *A, const char *B)
+{
+    short int k;
+    char TmpA;
+    char TmpB;
+    char Flag;
+    char Bigger;
+    size_t i;
+    char *S;
+    char *T;
+    char *SS;
+    char *CS;
+    char *Buffer;
+    char *Result;
+    fixlen newfxlnrs;
+    
+    if (A == NULL || B == NULL)
+        return NULL;
+    
+    S = aal_mem_alloc_num(3);
+    T = aal_mem_alloc_num(3);
+    SS = aal_mem_alloc_2(A, B);
+    CS = aal_mem_alloc_2(A, B);
+    Buffer = aal_mem_alloc_2(A, B);
+    Result = aal_mem_alloc_2(A, B);
+    
+    if (S == NULL || T == NULL || SS == NULL || CS == NULL || Buffer == NULL || Result == NULL)
+    {
+        aal_mem_dealloc(S);
+        aal_mem_dealloc(T);
+        aal_mem_dealloc(SS);
+        aal_mem_dealloc(CS);
+        aal_mem_dealloc(Buffer);
+        aal_mem_dealloc(Result);
         return NULL;
     }
     
-    // Determine which number is larger
-    aal_comparison_t comparison = aal_compare(a, b);
-    const char *larger = a;
-    const char *smaller = b;
-    bool result_negative = false;
+    Flag = '0';
+    Bigger = aal_cmp(A, B);
     
-    if (comparison == AAL_SECOND_GREATER) {
-        larger = b;
-        smaller = a;
-        result_negative = true;
-    } else if (comparison == AAL_EQUAL) {
-        char *zero = aal_allocate_string(2);
-        if (zero != NULL) {
-            strcpy(zero, "0");
+    if (Bigger == '2')
+    {
+        char *Temp = aal_copy(B, 0);
+        if (Temp != NULL)
+        {
+            strcpy(Buffer, Temp);
+            aal_mem_dealloc(Temp);
         }
-        return zero;
+        Temp = aal_copy(A, 0);
+        if (Temp != NULL)
+        {
+            strcpy((char *)B, Temp);
+            aal_mem_dealloc(Temp);
+        }
+        strcpy((char *)A, Buffer);
     }
     
-    aal_fixlen_t equalized = aal_equalize_lengths(larger, smaller);
-    if (equalized.num1 == NULL || equalized.num2 == NULL) {
-        aal_free_fixlen_result(&equalized);
+    newfxlnrs = aal_fixlen(A, B);
+    if (newfxlnrs.Num1 == NULL || newfxlnrs.Num2 == NULL)
+    {
+        aal_mem_dealloc(S);
+        aal_mem_dealloc(T);
+        aal_mem_dealloc(SS);
+        aal_mem_dealloc(CS);
+        aal_mem_dealloc(Buffer);
+        aal_mem_dealloc(Result);
         return NULL;
     }
     
-    char *result = aal_allocate_for_two_strings(equalized.num1, equalized.num2);
-    if (result == NULL) {
-        aal_free_fixlen_result(&equalized);
-        return NULL;
-    }
-    
-    int borrow = 0;
-    size_t result_index = 0;
-    
-    // Process from right to left
-    for (int i = (int)equalized.final_length - 1; i >= 0; i--) {
-        int digit_larger = equalized.num1[i] - '0';
-        int digit_smaller = equalized.num2[i] - '0';
+    for (i = 0; i < newfxlnrs.FinLen; i++)
+    {
+        TmpA = newfxlnrs.Num1[newfxlnrs.FinLen - i - 1];
+        TmpB = newfxlnrs.Num2[newfxlnrs.FinLen - i - 1];
         
-        digit_larger -= borrow;
-        
-        if (digit_larger < digit_smaller) {
-            digit_larger += 10;
-            borrow = 1;
-        } else {
-            borrow = 0;
+        if (i > 0)
+        {
+            if ((TmpA - '0') >= ((TmpB - '0') + (CS[i - 1] - '0')))
+            {
+                k = (TmpA - '0') - ((TmpB - '0') + (CS[i - 1] - '0'));
+                S[0] = k + '0';
+                S[1] = '\0';
+            }
+            else
+            {
+                k = (10 + (TmpA - '0')) - ((TmpB - '0') + (CS[i - 1] - '0'));
+                S[0] = '1';
+                S[1] = k + '0';
+                S[2] = '\0';
+            }
+        }
+        else
+        {
+            if ((TmpA - '0') >= (TmpB - '0'))
+            {
+                k = (TmpA - '0') - (TmpB - '0');
+                S[0] = k + '0';
+                S[1] = '\0';
+            }
+            else
+            {
+                k = (10 + (TmpA - '0')) - (TmpB - '0');
+                S[0] = '1';
+                S[1] = k + '0';
+                S[2] = '\0';
+            }
         }
         
-        int diff = digit_larger - digit_smaller;
-        result[result_index++] = (char)(diff + '0');
+        SS[i] = (S[1] != '\0') ? S[1] : S[0];
+        
+        if (S[1] == '\0')
+            CS[i] = '0';
+        else
+            CS[i] = '1';
+        
+        if (i == newfxlnrs.FinLen - 1)
+        {
+            if (Flag == '1')
+            {
+                T = aal_rvrs(S);
+                if (T != NULL)
+                {
+                    strncpy(&Result[i], T, 3);
+                    aal_mem_dealloc(T);
+                }
+            }
+            else
+            {
+                strncpy(&Result[i], S, 3);
+            }
+        }
+        else
+        {
+            Flag = '1';
+            Result[i] = SS[i];
+        }
     }
     
-    result[result_index] = '\0';
-    
-    // Reverse the result
-    char *final_result = aal_reverse(result);
-    aal_free_string(result);
-    aal_free_fixlen_result(&equalized);
-    
-    // Clear leading zeros
-    char *cleaned_result = aal_clear_leading_zeros(final_result);
-    aal_free_string(final_result);
-    
-    // Add minus sign if needed
-    if (result_negative && cleaned_result != NULL && !aal_is_zero(cleaned_result)) {
-        char *negative_result = aal_set_minus_sign(cleaned_result);
-        aal_free_string(cleaned_result);
-        cleaned_result = negative_result;
+    if (Flag == '1')
+    {
+        char *Reversed = aal_rvrs(Result);
+        if (Reversed != NULL)
+        {
+            strcpy(Result, Reversed);
+            aal_mem_dealloc(Reversed);
+        }
     }
     
-    return cleaned_result;
+    aal_mem_dealloc(S);
+    aal_mem_dealloc(T);
+    aal_mem_dealloc(SS);
+    aal_mem_dealloc(CS);
+    aal_mem_dealloc(Buffer);
+    
+    if (newfxlnrs.Bigger != '0' && newfxlnrs.Num1 != A && newfxlnrs.Num1 != B)
+        aal_mem_dealloc((char *)newfxlnrs.Num1);
+    if (newfxlnrs.Bigger != '0' && newfxlnrs.Num2 != A && newfxlnrs.Num2 != B)
+        aal_mem_dealloc((char *)newfxlnrs.Num2);
+    
+    return aal_clrizr(Result);
 }
 
 /******************************************************************************/
