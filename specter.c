@@ -1,4 +1,4 @@
-/******************************************************************************/
+e/******************************************************************************/
 /*                                   Specter                                  */
 /*                      	   <<Specter Library>>                            */
 /*                              George Delaportas                             */
@@ -9,7 +9,7 @@
 
 /* Headers */
 #include "headers/specter.h"
-#include "aal.h"
+#include "headers/aal.h"
 
 /* Specter - Initializer */
 char *specter_initializer(char *A, char *B, int V)
