@@ -5,8 +5,7 @@
 /*                            Copyright © 2010-2025                           */
 /******************************************************************************/
 
-#ifndef AAL_H
-#define AAL_H
+
 
 /* Libraries */
 #include <stdio.h>
@@ -14,107 +13,96 @@
 #include <stdint.h>
 #include <ctype.h>
 #include <string.h>
-#include <stdbool.h>
 
 /* AAL Header Tag */
-#define __AAL_H__ 1
-
-/* Return codes */
-typedef enum {
-    AAL_SUCCESS = 0,
-    AAL_ERROR_NULL_POINTER = -1,
-    AAL_ERROR_INVALID_INPUT = -2,
-    AAL_ERROR_MEMORY_ALLOCATION = -3,
-    AAL_ERROR_FILE_IO = -4
-} aal_error_t;
-
-/* Comparison results */
-typedef enum {
-    AAL_EQUAL = 0,
-    AAL_FIRST_GREATER = 1,
-    AAL_SECOND_GREATER = 2
-} aal_comparison_t;
+#ifndef __AAL_H__
+#define __AAL_H__ 		1
 
 /* Fixate Numbers Length - Result */
-typedef struct {
-    aal_comparison_t bigger;
-    char *num1;
-    char *num2;
-    size_t final_length;
-} aal_fixlen_t;
+typedef struct fixlenres
+{
+    char Bigger;
+    const char *Num1;
+    const char *Num2;
+    size_t FinLen;
+} fixlen;
 
 /* Read File - Output */
-typedef struct {
-    char *num1;
-    char *num2;
-    aal_error_t error;
-} aal_rdfile_t;
+typedef struct rdfloutres
+{
+    char *Num1;
+    char *Num2;
+} rdflout;
 
 /* AAL - Length */
-size_t aal_length(const char *str);
+size_t aal_len(const char *X);
 
-/* AAL - Copy substring starting at position */
-char *aal_copy_from_position(const char *source, size_t position);
+/* AAL - Copy */
+char *aal_copy(const char *S, size_t P);
 
-/* AAL - Compare two number strings */
-aal_comparison_t aal_compare(const char *a, const char *b);
+/* AAL - Compare */
+char aal_cmp(const char *A, const char *B);
 
-/* AAL - Reverse string */
-char *aal_reverse(const char *str);
+/* AAL - Reverse */
+char *aal_rvrs(const char *X);
 
-/* AAL - Pad string with prefix */
-char *aal_pad_prefix(const char *str, const char *prefix);
+/* AAL - Padding */
+char *aal_pad(const char *X, const char *S);
 
-/* AAL - Check if string represents zero */
-bool aal_is_zero(const char *str);
+/* AAL - Zero Check */
+char aal_zrchk(const char *X);
 
-/* AAL - Clear leading zeros */
-char *aal_clear_leading_zeros(const char *str);
+/* AAL - Clear Initial Zeroes */
+char *aal_clrizr(const char *X);
 
-/* AAL - Check for minus sign */
-bool aal_has_minus_sign(const char *str);
+/* AAL - Minus Check (Minus Sign) */
+char aal_minchk(const char *X);
 
-/* AAL - Add minus sign */
-char *aal_set_minus_sign(const char *str);
+/* AAL - Set Minus Sign */
+char *aal_setmin(const char *X);
 
-/* AAL - Remove minus sign */
-char *aal_clear_minus_sign(const char *str);
+/* AAL - Clear Minus Sign */
+char *aal_clrmin(const char *X);
 
-/* AAL - Find decimal point position */
-int aal_find_decimal_point(const char *str);
+/* AAL - Dot Check (Comma Sign) */
+size_t aal_dotchk(const char *X);
 
-/* AAL - Insert decimal point at position */
-char *aal_set_decimal_point(const char *str, size_t position);
+/* AAL - Set Dot (Comma Sign) */
+char *aal_setdot(const char *X, size_t P);
 
-/* AAL - Remove decimal point */
-char *aal_clear_decimal_point(const char *str);
+/* AAL - Clear Dot (Comma Sign) */
+char *aal_clrdot(const char *X);
 
-/* AAL - Equalize string lengths with padding */
-aal_fixlen_t aal_equalize_lengths(const char *a, const char *b);
+/* AAL - Fixate Numbers Length */
+fixlen aal_fixlen(const char *A, const char *B);
 
-/* AAL - Read two numbers from file */
-aal_rdfile_t aal_read_file(const char *filename);
+/* AAL - Read File */
+rdflout aal_rdfl(const char *Z);
 
-/* AAL - Validate single number string */
-aal_error_t aal_validate_number(const char *str);
+/* AAL - Error Check (1 Argument) */
+char aal_errchk_1(const char *X);
 
-/* AAL - Validate two number strings */
-aal_error_t aal_validate_two_numbers(const char *a, const char *b);
+/* AAL - Error Check (2 Arguments) */
+char aal_errchk_2(const char *A, const char *B);
 
-/* AAL - Memory allocation helpers */
-char *aal_allocate_string(size_t length);
-char *aal_allocate_like_string(const char *str);
-char *aal_allocate_for_two_strings(const char *a, const char *b);
+/* AAL - Memory Allocator (1 Argument) */
+char *aal_mem_alloc_num(size_t V);
 
-/* AAL - Memory deallocation */
-void aal_free_string(char *str);
-void aal_free_fixlen_result(aal_fixlen_t *result);
-void aal_free_rdfile_result(aal_rdfile_t *result);
+/* AAL - Memory Allocator (1 Argument) */
+char *aal_mem_alloc_1(const char *A);
 
-/* AAL - Arithmetic operations */
-char *aal_add(const char *a, const char *b);
-char *aal_subtract(const char *a, const char *b);
+/* AAL - Memory Allocator (2 Arguments) */
+char *aal_mem_alloc_2(const char *A, const char *B);
 
-#endif /* AAL_H */
+/* AAL - Memory Deallocator */
+int aal_mem_dealloc(char *S);
+
+/* AAL - Addition */
+char *aal_add(const char *A, const char *B);
+
+/* AAL - Subtraction */
+char *aal_sub(const char *A, const char *B);
+
+#endif /* __AAL_H__ */
 
 /******************************************************************************/
