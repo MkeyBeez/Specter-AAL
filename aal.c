@@ -595,28 +595,62 @@ static char *sub_same_len(const char *A, const char *B, size_t len) // NOSONAR
  */
 char *aal_add(const char *A, const char *B)
 {
-    fixlen fl = aal_fixlen(A, B);
-    char *result = aal_mem_alloc_2(A, B);
-    int carry = 0, sum, pos = 0;
+    char *S = aal_mem_alloc_num(3);
+    char *T = aal_mem_alloc_num(3);
+    char *SS = aal_mem_alloc_2(A, B);
+    char *CS = aal_mem_alloc_2(A, B);
+    char *Result = aal_mem_alloc_2(A, B);
+    fixlen newfxlnrs = aal_fixlen(A, B);
+    char *P = newfxlnrs.Num1;
+    char Flag = '0';
     
-    // Add digits from right to left
-    for (int i = fl.FinLen - 1; i >= 0; i--) {
-        sum = (fl.Num1[i] - '0') + (fl.Num2[i] - '0') + carry;
-        carry = sum / 10;
-        result[pos++] = (sum % 10) + '0';
+    while ((P - newfxlnrs.Num1) < newfxlnrs.FinLen) {
+        int pos = P - newfxlnrs.Num1;
+        char TmpA = newfxlnrs.Num1[newfxlnrs.FinLen - pos - 1];
+        char TmpB = newfxlnrs.Num2[newfxlnrs.FinLen - pos - 1];
+        
+        short int k = (TmpA - '0') + (TmpB - '0');
+        if (pos > 0) k += (CS[pos - 1] - '0');
+        
+        if (k > 9) {
+            S[0] = '1';
+            S[1] = (k - 10) + '0';
+            S[2] = '\0';
+        } else {
+            S[0] = k + '0';
+            S[1] = '\0';
+        }
+        
+        SS[pos] = (S[1] == '\0') ? S[0] : S[1];
+        CS[pos] = (k > 9) ? '1' : '0';
+        
+        if (pos == newfxlnrs.FinLen - 1) {
+            if (Flag == '1') {
+                T = aal_rvrs(S);
+                Result[pos] = T[0];
+                Result[pos + 1] = T[1];
+                Result[pos + 2] = T[2];
+            } else {
+                Result[pos] = S[0];
+                Result[pos + 1] = S[1];
+                Result[pos + 2] = S[2];
+            }
+        } else {
+            Flag = '1';
+            Result[pos] = SS[pos];
+        }
+        
+        P++;
     }
     
-    // Add final carry if present
-    if (carry) {
-        result[pos++] = carry + '0';
-    }
+    if (Flag == '1') Result = aal_rvrs(Result);
     
-    result[pos] = '\0';
+    aal_mem_dealloc(S);
+    aal_mem_dealloc(T);
+    aal_mem_dealloc(SS);
+    aal_mem_dealloc(CS);
     
-    // Reverse result since we built it backwards
-    result = aal_rvrs(result);
-    
-    return aal_clrizr(result);
+    return aal_clrizr(Result);
 }
 
 char *aal_sub(const char *A, const char *B)
