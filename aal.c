@@ -269,7 +269,7 @@ char aal_zrchk(const char *X)
  *  '1' => A is bigger
  *  '2' => B is bigger
  */
-char aal_cmp(char *A, char *B)
+char aal_cmp(const char *A, const char *B)
 {
     if (!A || !B)
         return '0';
@@ -461,7 +461,7 @@ char aal_errchk_2(const char *A, const char *B)
  * implement a version that accepts an index as pointer to char and uses
  * its first character numeric value. This mirrors original's odd usage.
  */
-char *aal_setdot(const char *X, const char *P)
+char *aal_setdot(const char *X, size_t pos)
 {
     if (!X || !P)
         return NULL;
@@ -577,7 +577,7 @@ static char *sub_same_len(const char *A, const char *B, size_t len)
  * but implemented more simply. This function expects decimalless integer
  * strings; the original library handled decimal points at a higher level.
  */
-char *aal_add(char *A, char *B)
+char *aal_add(const char *A, const char *B)
 {
     /* Quick null checks */
     if (!A || !B)
@@ -621,7 +621,7 @@ char *aal_add(char *A, char *B)
     return trimmed;
 }
 
-char *aal_sub(char *A, char *B)
+char *aal_sub(const char *A, const char *B)
 {
     if (!A || !B)
         return aal_mem_alloc_num(0);
