@@ -9,6 +9,7 @@
 
 /* Headers */
 #include "headers/specter.h"
+#include "aal.h"
 
 /* Specter - Initializer */
 char *specter_initializer(char *A, char *B, int V)
