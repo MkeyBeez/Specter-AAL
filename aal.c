@@ -143,8 +143,18 @@ char *aal_rvrs(char *X)
 /* AAL - Padding */
 char *aal_pad(char *X, char *S)
 {
+    // Add NULL checks before calling aal_len
+    if (X == NULL || S == NULL) {
+        return NULL;
+    }
+    
     uintptr_t LenX = aal_len(X);  // C99: declare at point of first use
     uintptr_t LenS = aal_len(S);
+    
+    // Check if aal_len returned error values
+    if (LenX == (uintptr_t)-1 || LenS == (uintptr_t)-1) {
+        return NULL;
+    }
     
     char *PadStr = aal_mem_alloc_num(LenX + LenS);
     if (PadStr == NULL) {
@@ -169,8 +179,6 @@ char *aal_pad(char *X, char *S)
     
     return PadStr;
 }
-
-/* AAL - Zero Check */
 
 /* AAL - Zero Check */
 char aal_zrchk(char *X)
