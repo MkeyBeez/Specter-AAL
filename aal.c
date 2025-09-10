@@ -269,6 +269,28 @@ char aal_zrchk(const char *X)
  *  '1' => A is bigger
  *  '2' => B is bigger
  */
+/* Internal helper: compare signs and lengths */
+static char cmp_by_length_and_sign(const char *a, const char *b,
+                                   size_t la, size_t lb,
+                                   char mina, char minb)
+{
+    if (la > lb)
+        return (mina == '1') ? '2' : '1';
+    if (lb > la)
+        return (minb == '1') ? '1' : '2';
+    return '0'; /* equal length */
+}
+
+/* Internal helper: compare strings of equal length */
+static char cmp_equal_len(const char *a, const char *b,
+                          char mina, char minb)
+{
+    int cmp = strcmp(a, b);
+    if (cmp == 0) return '0';
+    if (cmp > 0) return (mina == '1') ? '2' : '1';
+    return (minb == '1') ? '1' : '2';
+}
+
 char aal_cmp(const char *A, const char *B)
 {
     if (!A || !B)
@@ -277,39 +299,28 @@ char aal_cmp(const char *A, const char *B)
     char *a = aal_clrizr(A);
     char *b = aal_clrizr(B);
 
-    char zeroa = aal_zrchk(a);
-    char zerob = aal_zrchk(b);
-    if (zeroa == '1' && zerob == '1') {
-        if (a != A) aal_mem_dealloc(a);
-        if (b != B) aal_mem_dealloc(b);
-        return '0';
+    char result = '0';
+
+    /* both zero */
+    if (aal_zrchk(a) == '1' && aal_zrchk(b) == '1') {
+        goto cleanup;
     }
 
-    size_t la = strlen(a), lb = strlen(b); // NOSONAR - validated input, safe use
+    size_t la = strlen(a), lb = strlen(b);
     char mina = aal_minchk(a);
     char minb = aal_minchk(b);
 
-    char result = '0';
+    if (la != lb)
+        result = cmp_by_length_and_sign(a, b, la, lb, mina, minb);
+    else
+        result = cmp_equal_len(a, b, mina, minb);
 
-    if (la != lb) {
-        if (la > lb)
-            result = (mina == '1') ? '2' : '1';
-        else
-            result = (minb == '1') ? '1' : '2';
-    } else {
-        int cmp = strcmp(a, b);
-        if (cmp == 0)
-            result = '0';
-        else if (cmp > 0)
-            result = (mina == '1') ? '2' : '1';
-        else
-            result = (minb == '1') ? '1' : '2';
-    }
-
+cleanup:
     if (a != A) aal_mem_dealloc(a);
     if (b != B) aal_mem_dealloc(b);
     return result;
 }
+
 
 /* ------------------------- Fixlength / alignment --------------------- */
 
