@@ -463,24 +463,24 @@ char aal_errchk_2(const char *A, const char *B)
  */
 char *aal_setdot(const char *X, size_t pos)
 {
-    if (!X || !P)
+    if (!X)
         return NULL;
 
-    long idx = (long)(unsigned char)P[0];
-    size_t n = strlen(X); // NOSONAR - validated input, safe use
-    if ((size_t)idx > n)
-        idx = n;
+    size_t n = strlen(X);
+    if (pos > n)
+        pos = n;
 
     char *out = aal_mem_alloc_num(n + 1);
     if (!out)
         return NULL;
 
-    memcpy(out, X, (size_t)idx);
-    out[idx] = '.';
-    memcpy(out + idx + 1, X + idx, n - (size_t)idx);
+    memcpy(out, X, pos);
+    out[pos] = '.';
+    memcpy(out + pos + 1, X + pos, n - pos);
     out[n + 1] = '\0';
     return out;
 }
+
 
 /* Remove the first dot from X and return newly allocated string. */
 char *aal_clrdot(const char *X)
