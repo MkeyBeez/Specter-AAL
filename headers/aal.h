@@ -37,73 +37,73 @@ typedef struct rdfloutres
 /* Function Declarations */
 
 /* AAL - Length */
-uintptr_t aal_len(const char *X);
+uintptr_t aal_len(char *X);
 
 /* AAL - Copy */
-char *aal_copy(const char *S, unsigned long P);  /* Keep original parameter type */
+char *aal_copy(char *S, unsigned long P);
 
 /* AAL - Compare */
-char aal_cmp(const char *A, const char *B);
+char aal_cmp(char *A, char *B);
 
 /* AAL - Reverse */
-char *aal_rvrs(const char *X);
+char *aal_rvrs(char *X);
 
 /* AAL - Padding */
-char *aal_pad(const char *X, const char *S);
+char *aal_pad(char *X, char *S);
 
 /* AAL - Zero Check */
-char aal_zrchk(const char *X);
+char aal_zrchk(char *X);
 
 /* AAL - Clear Initial Zeroes */
-char *aal_clrizr(const char *X);
+char *aal_clrizr(char *X);
 
 /* AAL - Minus Check (Minus Sign) */
-char aal_minchk(const char *X);
+char aal_minchk(char *X);
 
 /* AAL - Set Minus Sign */
-char *aal_setmin(const char *X);
+char *aal_setmin(char *X);
 
 /* AAL - Clear Minus Sign */
-char *aal_clrmin(const char *X);
+char *aal_clrmin(char *X);
 
 /* AAL - Dot Check (Comma Sign) */
-uintptr_t aal_dotchk(const char *X);
+uintptr_t aal_dotchk(char *X);
 
 /* AAL - Set Dot (Comma Sign) */
-char *aal_setdot(const char *X, const char *P);  /* Keep original parameter type */
+char *aal_setdot(char *X, char *P);
 
 /* AAL - Clear Dot (Comma Sign) */
-char *aal_clrdot(const char *X);
+char *aal_clrdot(char *X);
 
 /* AAL - Fixate Numbers Length */
-fixlen aal_fixlen(const char *A, const char *B);
+fixlen aal_fixlen(char *A, char *B);
 
 /* AAL - Read File */
 rdflout aal_rdfl(const char *Z);
 
 /* AAL - Error Check (1 Argument) */
-char aal_errchk_1(const char *X);
+char aal_errchk_1(char *X);
 
 /* AAL - Error Check (2 Arguments) */
-char aal_errchk_2(const char *A, const char *B);
+char aal_errchk_2(char *A, char *B);
 
 /* AAL - Memory Allocator (Numeric) */
-char *aal_mem_alloc_num(unsigned long V);  /* Keep original parameter type */
+char *aal_mem_alloc_num(unsigned long V);
 
 /* AAL - Memory Allocator (1 Argument) */
-char *aal_mem_alloc_1(const char *A);
+char *aal_mem_alloc_1(char *A);
 
 /* AAL - Memory Allocator (2 Arguments) */
-char *aal_mem_alloc_2(const char *A, const char *B);
+char *aal_mem_alloc_2(char *A, char *B);
 
 /* AAL - Memory Deallocator */
 int aal_mem_dealloc(char *S);
 
 /* AAL - Addition */
-char *aal_add(const char *A, const char *B);
+char *aal_add(char *A, char *B);
 
 /* AAL - Subtraction */
-char *aal_sub(const char *A, const char *B);
+char *aal_sub(char *A, char *B);
 
 #endif /* __AAL_H__ */
 /******************************************************************************/
