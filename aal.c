@@ -593,48 +593,30 @@ static char *sub_same_len(const char *A, const char *B, size_t len) // NOSONAR
  * but implemented more simply. This function expects decimalless integer
  * strings; the original library handled decimal points at a higher level.
  */
-char *aal_add(const char *A, const char *B)
+char *aal_add(char *A, char *B)
 {
-    /* Quick null checks */
-    if (!A || !B)
-        return aal_mem_alloc_num(0);
-
-    /* Normalize strings (remove leading noise) */
-    char *a = aal_clrizr(A);
-    char *b = aal_clrizr(B);
-
-    /* If either is zero, return the other. */
-    if (aal_zrchk(a) == '1') {
-        if (a != A) aal_mem_dealloc(a);
-        return b == B ? aal_copy(B, 0) : b;
+    fixlen fl = aal_fixlen(A, B);
+    char *result = aal_mem_alloc_2(A, B);
+    int carry = 0, sum, pos = 0;
+    
+    // Add digits from right to left
+    for (int i = fl.FinLen - 1; i >= 0; i--) {
+        sum = (fl.Num1[i] - '0') + (fl.Num2[i] - '0') + carry;
+        carry = sum / 10;
+        result[pos++] = (sum % 10) + '0';
     }
-    if (aal_zrchk(b) == '1') {
-        if (b != B) aal_mem_dealloc(b);
-        return a == A ? aal_copy(A, 0) : a;
+    
+    // Add final carry if present
+    if (carry) {
+        result[pos++] = carry + '0';
     }
-
-    /* Only handle unsigned integer strings here; caller is responsible for
-     * sign and decimal handling (keeps parity with original split-of-concerns).
-     */
-    fixlen fl = aal_fixlen(a, b);
-    size_t n = fl.FinLen;
-
-    char *sum = add_same_len(fl.Num1, fl.Num2, n);
-
-    /* Cleanup temporary allocations created by aal_fixlen */
-    if (fl.Bigger == '1') {
-        if (fl.Num2 && fl.Num2 != b) aal_mem_dealloc(fl.Num2);
-    } else if (fl.Bigger == '2') {
-        if (fl.Num1 && fl.Num1 != a) aal_mem_dealloc(fl.Num1);
-    }
-
-    if (a != A) aal_mem_dealloc(a);
-    if (b != B) aal_mem_dealloc(b);
-
-    /* Trim leading zeros to match original aal_clrizr semantics */
-    char *trimmed = aal_clrizr(sum);
-    aal_mem_dealloc(sum);
-    return trimmed;
+    
+    result[pos] = '\0';
+    
+    // Reverse result since we built it backwards
+    result = aal_rvrs(result);
+    
+    return aal_clrizr(result);
 }
 
 char *aal_sub(const char *A, const char *B)
