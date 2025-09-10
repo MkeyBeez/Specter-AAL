@@ -11,8 +11,7 @@ echo ""
 echo "Installing..."
 
 #Compile
-gcc -std=gnu99 -ansi -pedantic -O3 -c console.c aal.c benchmark.c
-
+gcc -std=gnu99 -pedantic -O3 -c console.c aal.c benchmark.c
 #Link
 gcc -W -o Specter console.o aal.o benchmark.o
 
