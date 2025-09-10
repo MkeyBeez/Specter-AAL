@@ -5,7 +5,9 @@
 /*                            Copyright © 2010-2025                           */
 /******************************************************************************/
 
-
+/* AAL Header Tag */
+#ifndef __AAL_H__
+#define __AAL_H__ 1
 
 /* Libraries */
 #include <stdio.h>
@@ -16,18 +18,13 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-
-/* AAL Header Tag */
-#ifndef __AAL_H__
-#define __AAL_H__ 		1
-
 /* Fixate Numbers Length - Result */
 typedef struct fixlenres
 {
     char Bigger;
-    const char *Num1;
-    const char *Num2;
-    size_t FinLen;
+    char *Num1;          /* Changed from const char* to char* since they may be allocated */
+    char *Num2;          /* Changed from const char* to char* since they may be allocated */
+    uintptr_t FinLen;    /* Changed from size_t to uintptr_t for consistency */
 } fixlen;
 
 /* Read File - Output */
@@ -37,11 +34,13 @@ typedef struct rdfloutres
     char *Num2;
 } rdflout;
 
+/* Function Declarations */
+
 /* AAL - Length */
-size_t aal_len(const char *X);
+uintptr_t aal_len(const char *X);
 
 /* AAL - Copy */
-char *aal_copy(const char *S, size_t P);
+char *aal_copy(const char *S, unsigned long P);  /* Keep original parameter type */
 
 /* AAL - Compare */
 char aal_cmp(const char *A, const char *B);
@@ -68,10 +67,10 @@ char *aal_setmin(const char *X);
 char *aal_clrmin(const char *X);
 
 /* AAL - Dot Check (Comma Sign) */
-size_t aal_dotchk(const char *X);
+uintptr_t aal_dotchk(const char *X);
 
 /* AAL - Set Dot (Comma Sign) */
-char *aal_setdot(const char *X, size_t P);
+char *aal_setdot(const char *X, const char *P);  /* Keep original parameter type */
 
 /* AAL - Clear Dot (Comma Sign) */
 char *aal_clrdot(const char *X);
@@ -88,8 +87,8 @@ char aal_errchk_1(const char *X);
 /* AAL - Error Check (2 Arguments) */
 char aal_errchk_2(const char *A, const char *B);
 
-/* AAL - Memory Allocator (1 Argument) */
-char *aal_mem_alloc_num(size_t V);
+/* AAL - Memory Allocator (Numeric) */
+char *aal_mem_alloc_num(unsigned long V);  /* Keep original parameter type */
 
 /* AAL - Memory Allocator (1 Argument) */
 char *aal_mem_alloc_1(const char *A);
@@ -107,5 +106,4 @@ char *aal_add(const char *A, const char *B);
 char *aal_sub(const char *A, const char *B);
 
 #endif /* __AAL_H__ */
-
 /******************************************************************************/
