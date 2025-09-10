@@ -593,7 +593,7 @@ static char *sub_same_len(const char *A, const char *B, size_t len) // NOSONAR
  * but implemented more simply. This function expects decimalless integer
  * strings; the original library handled decimal points at a higher level.
  */
-char *aal_add(char *A, char *B)
+char *aal_add(const char *A, const char *B)
 {
     fixlen fl = aal_fixlen(A, B);
     char *result = aal_mem_alloc_2(A, B);
