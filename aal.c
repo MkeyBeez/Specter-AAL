@@ -171,306 +171,331 @@ char *aal_pad(char *X, char *S)
 }
 
 /* AAL - Zero Check */
-char aal_zrchk(const char *X)
-{
-    char Zero;
-    size_t i;
-    size_t Tracer;
-    size_t LenX;
-    char *CleanX;
 
-    if (X == NULL)
+/* AAL - Zero Check */
+char aal_zrchk(char *X)
+{
+    if (X == NULL) {
         return '0';
-    
-    CleanX = aal_clrmin(X);
-    LenX = aal_len(CleanX);
-    
-    Zero = '0';
-    Tracer = 0;
-    
-    for (i = 0; i < LenX; i++)
-    {
-        if (CleanX[i] == '0')
-            Tracer++;
     }
     
-    aal_mem_dealloc(CleanX);
+    char *CleanX = aal_clrmin(X);  // C99: declare at point of first use
+    if (CleanX == NULL) {
+        return '0';  // Handle allocation failure
+    }
     
-    if (Tracer == LenX)
+    uintptr_t LenX = aal_len(CleanX);
+    char Zero = '0';  // C99: initialize at declaration
+    uintptr_t Tracer = 0;  // C99: initialize at declaration
+    
+    char *P = CleanX;  // C99: declare at point of first use
+    while (*P != '\0') {
+        if (CleanX[P - CleanX] == '0') {
+            Tracer++;
+        }
+        P++;  // Fixed: removed incorrect dereference operator
+    }
+    
+    aal_mem_dealloc(CleanX);  // Clean up allocated memory
+    
+    if (Tracer == LenX) {
         Zero = '1';
+    }
     
     return Zero;
 }
 
 /* AAL - Clear Initial Zeroes */
-char *aal_clrizr(const char *X)
+char *aal_clrizr(char *X)
 {
-    char Flag;
-    size_t i;
-    char *ClrStr;
-    size_t LenX;
-    
-    if (X == NULL)
+    if (X == NULL) {
         return NULL;
+    }
     
-    LenX = aal_len(X);
-    Flag = '0';
+    char *ClrStr = aal_mem_alloc_1(X);
+    if (ClrStr == NULL) {
+        return NULL;  // Handle allocation failure
+    }
     
-    for (i = 0; i < LenX; i++)
-    {
-        if (X[i] != '0' && (isdigit(X[i]) || X[i] == '-' || X[i] == '.'))
-        {
-            ClrStr = aal_copy(X, i);
+    char Flag = '0';  // C99: initialize at declaration
+    char *P = X;      // C99: declare at point of first use
+    
+    while (*P != '\0') {
+        if (X[P - X] != '0' && (isdigit(X[P - X]) || X[P - X] == '-' || X[P - X] == '.')) {
+            aal_mem_dealloc(ClrStr);  // Free the initial allocation
+            ClrStr = aal_copy(X, (uintptr_t)(P - X));
             Flag = '1';
             break;
         }
+        P++;  // Fixed: removed incorrect dereference operator
     }
     
-    if (Flag == '0')
-    {
-        ClrStr = aal_mem_alloc_num(2);
-        if (ClrStr != NULL)
-        {
-            ClrStr[0] = '0';
-            ClrStr[1] = '\0';
-        }
-        return ClrStr;
-    }
-    
-    if (aal_dotchk(ClrStr) == (size_t)-1)
-    {
+    if (Flag == '1' && aal_dotchk(ClrStr) == 0) {
         char *Temp = aal_pad(ClrStr, "0");
         aal_mem_dealloc(ClrStr);
         ClrStr = Temp;
+    }
+    
+    if (Flag == '0') {
+        aal_mem_dealloc(ClrStr);
+        ClrStr = aal_mem_alloc_num(2);
+        if (ClrStr != NULL) {
+            ClrStr[0] = '0';
+            ClrStr[1] = '\0';
+        }
     }
     
     return ClrStr;
 }
 
 /* AAL - Minus Check (Minus Sign) */
-char aal_minchk(const char *X)
+char aal_minchk(char *X)
 {
-    if (X == NULL || X[0] == '\0')
+    if (X == NULL || X[0] == '\0') {
         return '0';
+    }
     
-    return (X[0] == '-') ? '1' : '0';
+    char Minus = '0';  // C99: initialize at declaration
+    
+    if (X[0] == '-') {
+        Minus = '1';
+    }
+    
+    return Minus;
 }
 
 /* AAL - Set Minus Sign */
-char *aal_setmin(const char *X)
+char *aal_setmin(char *X)
 {
-    char *FinNum;
-    size_t LenX;
-    size_t i;
-    
-    if (X == NULL)
+    if (X == NULL) {
         return NULL;
+    }
     
-    LenX = aal_len(X);
-    FinNum = aal_mem_alloc_num(LenX + 2);
-    if (FinNum == NULL)
-        return NULL;
+    uintptr_t LenX = aal_len(X);  // Get length first for proper allocation
+    char *FinNum = aal_mem_alloc_num(LenX + 2);  // Allocate for original + minus + null terminator
+    if (FinNum == NULL) {
+        return NULL;  // Handle allocation failure
+    }
     
     FinNum[0] = '-';
     
-    for (i = 0; i < LenX; i++)
-    {
-        FinNum[i + 1] = X[i];
+    char *P = X;  // C99: declare at point of first use
+    while (*P != '\0') {
+        FinNum[(P - X) + 1] = X[P - X];
+        P++;  // Fixed: removed incorrect dereference operator
     }
     
-    FinNum[LenX + 1] = '\0';
+    FinNum[(P - X) + 1] = '\0';
     
     return FinNum;
 }
 
 /* AAL - Clear Minus Sign */
-char *aal_clrmin(const char *X)
+char *aal_clrmin(char *X)
 {
-    char *AbsNum;
-    size_t LenX;
-    size_t i;
-    
-    if (X == NULL)
+    if (X == NULL) {
         return NULL;
+    }
     
-    if (aal_minchk(X) == '0')
-    {
-        AbsNum = aal_mem_alloc_num(aal_len(X) + 1);
-        if (AbsNum != NULL)
+    if (aal_minchk(X) == '0') {
+        // No minus sign, create a copy of the original string
+        uintptr_t LenX = aal_len(X);
+        char *AbsNum = aal_mem_alloc_num(LenX + 1);
+        if (AbsNum != NULL) {
             strcpy(AbsNum, X);
+        }
         return AbsNum;
     }
     
-    LenX = aal_len(X);
-    AbsNum = aal_mem_alloc_num(LenX);
-    if (AbsNum == NULL)
+    // Has minus sign, allocate memory for the string without the minus sign
+    uintptr_t LenX = aal_len(X);
+    char *AbsNum = aal_mem_alloc_num(LenX);  // One less character (no minus sign)
+    if (AbsNum == NULL) {
         return NULL;
-    
-    for (i = 1; i < LenX; i++)
-    {
-        AbsNum[i - 1] = X[i];
     }
     
-    AbsNum[LenX - 1] = '\0';
+    char *P = X + 1;  // Start from second character (skip minus sign)
+    uintptr_t index = 0;
+    
+    while (*P != '\0') {
+        AbsNum[index] = *P;
+        P++;
+        index++;
+    }
+    
+    AbsNum[index] = '\0';
     
     return AbsNum;
 }
 
 /* AAL - Dot Check (Comma Sign) */
-size_t aal_dotchk(const char *X)
+uintptr_t aal_dotchk(char *X)
 {
-    size_t i;
-    size_t LenX;
-    
-    if (X == NULL)
-        return (size_t)-1;
-    
-    LenX = aal_len(X);
-    
-    for (i = 0; i < LenX; i++)
-    {
-        if (X[i] == '.')
-            return i;
+    if (X == NULL) {
+        return (uintptr_t)-1;
     }
     
-    return (size_t)-1;
+    char *P = X;    // C99: declare at point of first use
+    char Flag = 0;  // C99: initialize at declaration
+    
+    while (*P != '\0') {
+        if (X[P - X] == '.') {
+            Flag = '1';
+            break;
+        }
+        P++;  // Fixed: removed incorrect dereference operator
+    }
+    
+    if (Flag == '1') {
+        return (uintptr_t)(P - X);
+    }
+    
+    return (uintptr_t)-1;
 }
 
 /* AAL - Set Dot (Comma Sign) */
-char *aal_setdot(const char *X, size_t Pos)
+char *aal_setdot(char *X, char *P)
 {
-    char *RealNum;
-    size_t LenX;
-    size_t i;
-    size_t j;
-    
-    if (X == NULL || Pos > aal_len(X))
+    if (X == NULL || P == NULL) {
         return NULL;
-    
-    LenX = aal_len(X);
-    RealNum = aal_mem_alloc_num(LenX + 2);
-    if (RealNum == NULL)
-        return NULL;
-    
-    for (i = 0, j = 0; i <= LenX; i++, j++)
-    {
-        if (i == Pos)
-        {
-            RealNum[j] = '.';
-            j++;
-        }
-        if (i < LenX)
-        {
-            RealNum[j] = X[i];
-        }
     }
     
-    RealNum[LenX + 1] = '\0';
+    uintptr_t LenX = aal_len(X);
+    char *RealNum = aal_mem_alloc_num(LenX + 2);  // +1 for dot, +1 for null terminator
+    if (RealNum == NULL) {
+        return NULL;
+    }
+    
+    uintptr_t dotPosition = (uintptr_t)*P;  // Position where to insert the dot
+    char *N = X;  // C99: declare at point of first use
+    
+    // Copy characters before the dot position
+    while ((uintptr_t)(N - X) != dotPosition) {
+        RealNum[N - X] = X[N - X];
+        N++;  // Fixed: removed incorrect dereference operator
+    }
+    
+    // Insert the dot
+    RealNum[N - X] = '.';
+    
+    // Move to next position for continuing the copy
+    uintptr_t dotIndex = (uintptr_t)(N - X);
+    
+    // Copy remaining characters after the dot
+    while (*N != '\0') {
+        RealNum[dotIndex + 1 + (N - X - dotIndex)] = X[N - X];
+        N++;  // Fixed: removed incorrect dereference operator
+    }
+    
+    RealNum[dotIndex + 1 + (N - X - dotIndex)] = '\0';
     
     return RealNum;
 }
 
 /* AAL - Clear Dot (Comma Sign) */
-char *aal_clrdot(const char *X)
+char *aal_clrdot(char *X)
 {
-    char *IntNum;
-    size_t DotPos;
-    size_t LenX;
-    size_t i;
-    size_t j;
-    
-    if (X == NULL)
+    if (X == NULL) {
         return NULL;
+    }
     
-    DotPos = aal_dotchk(X);
-    if (DotPos == (size_t)-1)
-    {
-        IntNum = aal_mem_alloc_num(aal_len(X) + 1);
-        if (IntNum != NULL)
+    // Check if there's actually a dot to remove
+    uintptr_t dotPos = aal_dotchk(X);
+    if (dotPos == (uintptr_t)-1) {
+        // No dot found, return a copy of the original string
+        uintptr_t LenX = aal_len(X);
+        char *IntNum = aal_mem_alloc_num(LenX + 1);
+        if (IntNum != NULL) {
             strcpy(IntNum, X);
+        }
         return IntNum;
     }
     
-    LenX = aal_len(X);
-    IntNum = aal_mem_alloc_num(LenX);
-    if (IntNum == NULL)
+    uintptr_t LenX = aal_len(X);
+    char *IntNum = aal_mem_alloc_num(LenX);  // One less character (no dot)
+    if (IntNum == NULL) {
         return NULL;
-    
-    for (i = 0, j = 0; i < LenX; i++)
-    {
-        if (i != DotPos)
-        {
-            IntNum[j] = X[i];
-            j++;
-        }
     }
     
-    IntNum[j] = '\0';
+    char *P = X;  // C99: declare at point of first use
+    uintptr_t writeIndex = 0;
+    
+    // Copy characters before the dot
+    while (*P != '.') {
+        IntNum[writeIndex] = *P;
+        P++;  // Fixed: removed incorrect dereference operator
+        writeIndex++;
+    }
+    
+    // Skip the dot
+    P++;
+    
+    // Copy characters after the dot
+    while (*P != '\0') {
+        IntNum[writeIndex] = *P;
+        P++;  // Fixed: removed incorrect dereference operator  
+        writeIndex++;
+    }
+    
+    IntNum[writeIndex] = '\0';
     
     return IntNum;
 }
 
 /* AAL - Fixate Numbers Length */
-fixlen aal_fixlen(const char *A, const char *B)
+fixlen aal_fixlen(char *A, char *B)
 {
-    size_t DifLen;
-    size_t LenA;
-    size_t LenB;
-    fixlen locfxlnrs = {'0', NULL, NULL, 0};
-    char *Tmp;
-    size_t i;
+    fixlen locfxlnrs = {0};  // C99: initialize struct to zero
     
-    if (A == NULL || B == NULL)
-        return locfxlnrs;
+    if (A == NULL || B == NULL) {
+        return locfxlnrs;  // Return zero-initialized struct for error case
+    }
     
-    LenA = aal_len(A);
-    LenB = aal_len(B);
+    uintptr_t LenA = aal_len(A);
+    uintptr_t LenB = aal_len(B);
     
-    if (LenA > LenB)
-    {
-        DifLen = LenA - LenB;
-        Tmp = aal_mem_alloc_num(DifLen + 1);
-        if (Tmp == NULL)
-            return locfxlnrs;
+    if (LenA > LenB) {
+        uintptr_t DifLen = LenA - LenB;  // C99: declare at point of first use
+        char *Tmp = aal_mem_alloc_num(DifLen + 1);  // +1 for null terminator
+        if (Tmp == NULL) {
+            return locfxlnrs;  // Handle allocation failure
+        }
         
-        for (i = 0; i < DifLen; i++)
-        {
+        // Fill padding string with zeros
+        for (uintptr_t i = 0; i < DifLen; i++) {  // C99: cleaner loop
             Tmp[i] = '0';
         }
         Tmp[DifLen] = '\0';
         
         locfxlnrs.Bigger = '1';
-        locfxlnrs.Num1 = (char *)A;
+        locfxlnrs.Num1 = A;
         locfxlnrs.Num2 = aal_pad(B, Tmp);
         locfxlnrs.FinLen = LenA;
         
         aal_mem_dealloc(Tmp);
-    }
-    else if (LenA < LenB)
-    {
-        DifLen = LenB - LenA;
-        Tmp = aal_mem_alloc_num(DifLen + 1);
-        if (Tmp == NULL)
-            return locfxlnrs;
+    } else if (LenA < LenB) {
+        uintptr_t DifLen = LenB - LenA;  // C99: declare at point of first use
+        char *Tmp = aal_mem_alloc_num(DifLen + 1);  // +1 for null terminator
+        if (Tmp == NULL) {
+            return locfxlnrs;  // Handle allocation failure
+        }
         
-        for (i = 0; i < DifLen; i++)
-        {
+        // Fill padding string with zeros
+        for (uintptr_t i = 0; i < DifLen; i++) {  // C99: cleaner loop
             Tmp[i] = '0';
         }
         Tmp[DifLen] = '\0';
         
         locfxlnrs.Bigger = '2';
         locfxlnrs.Num1 = aal_pad(A, Tmp);
-        locfxlnrs.Num2 = (char *)B;
+        locfxlnrs.Num2 = B;
         locfxlnrs.FinLen = LenB;
         
         aal_mem_dealloc(Tmp);
-    }
-    else
-    {
+    } else {
         locfxlnrs.Bigger = '0';
-        locfxlnrs.Num1 = (char *)A;
-        locfxlnrs.Num2 = (char *)B;
+        locfxlnrs.Num1 = A;
+        locfxlnrs.Num2 = B;
         locfxlnrs.FinLen = LenA;
     }
     
@@ -480,69 +505,83 @@ fixlen aal_fixlen(const char *A, const char *B)
 /* AAL - Read File */
 rdflout aal_rdfl(const char *Z)
 {
-    unsigned long i;
-    unsigned long flsz;
-    char *FlStrm;
-    size_t file_res;
-    rdflout locrdflout = {NULL, NULL};
-    FILE *FP;
+    rdflout locrdflout = {0};  // C99: initialize struct to zero
     
-    if (Z == NULL)
-        return locrdflout;
-    
-    FP = fopen(Z, "r");
-    
-    if (FP == NULL)
-    {
+    if (Z == NULL) {
         locrdflout.Num1 = "ERROR";
         locrdflout.Num2 = "ERROR";
         return locrdflout;
     }
     
-    fseek(FP, 0, SEEK_END);
-    flsz = ftell(FP);
+    FILE *FP = fopen(Z, "r");  // C99: declare at point of first use
+    if (FP == NULL) {
+        locrdflout.Num1 = "ERROR";
+        locrdflout.Num2 = "ERROR";
+        return locrdflout;
+    }
+    
+    // Get file size
+    if (fseek(FP, 0, SEEK_END) != 0) {
+        locrdflout.Num1 = "ERROR";
+        locrdflout.Num2 = "ERROR";
+        fclose(FP);
+        return locrdflout;
+    }
+    
+    long flsz = ftell(FP);  // Use long for ftell return type
+    if (flsz < 0) {
+        locrdflout.Num1 = "ERROR";
+        locrdflout.Num2 = "ERROR";
+        fclose(FP);
+        return locrdflout;
+    }
+    
     rewind(FP);
     
-    if (flsz < 3)
-    {
-        fclose(FP);
+    if ((unsigned long)flsz < 3) {
         locrdflout.Num1 = "ERROR";
         locrdflout.Num2 = "ERROR";
-        return locrdflout;
-    }
-    
-    FlStrm = aal_mem_alloc_num(flsz + 1);
-    if (FlStrm == NULL)
-    {
         fclose(FP);
         return locrdflout;
     }
     
-    file_res = fread(FlStrm, 1, flsz, FP);
-    FlStrm[flsz] = '\0';
+    char *FlStrm = aal_mem_alloc_num((unsigned long)flsz + 1);  // +1 for null terminator
+    if (FlStrm == NULL) {
+        locrdflout.Num1 = "ERROR";
+        locrdflout.Num2 = "ERROR";
+        fclose(FP);
+        return locrdflout;
+    }
     
-    if (file_res != flsz)
-    {
+    size_t file_res = fread(FlStrm, 1, (unsigned long)flsz, FP);
+    FlStrm[file_res] = '\0';  // Null terminate the string
+    
+    if (file_res == 0) {
+        locrdflout.Num1 = "ERROR";
+        locrdflout.Num2 = "ERROR";
         aal_mem_dealloc(FlStrm);
         fclose(FP);
-        locrdflout.Num1 = "ERROR";
-        locrdflout.Num2 = "ERROR";
         return locrdflout;
     }
     
-    i = 0;
-    while (FlStrm[i] != ':' && FlStrm[i] != '\0')
-        i++;
+    // Find the colon separator
+    unsigned long i = 0;  // C99: declare at point of first use
+    bool colonFound = false;
     
-    if (FlStrm[i] == ':')
-    {
-        locrdflout.Num1 = aal_copy(FlStrm, 0);
-        locrdflout.Num2 = aal_copy(FlStrm, i + 1);
+    while (i < file_res && FlStrm[i] != '\0') {
+        if (FlStrm[i] == ':') {
+            colonFound = true;
+            break;
+        }
+        i++;
     }
-    else
-    {
+    
+    if (!colonFound) {
         locrdflout.Num1 = "ERROR";
         locrdflout.Num2 = "ERROR";
+    } else {
+        locrdflout.Num1 = aal_copy(FlStrm, 0);
+        locrdflout.Num2 = aal_copy(FlStrm, i + 1);
     }
     
     aal_mem_dealloc(FlStrm);
@@ -552,403 +591,296 @@ rdflout aal_rdfl(const char *Z)
 }
 
 /* AAL - Error Check (1 Argument) */
-char aal_errchk_1(const char *X)
+char aal_errchk_1(char *X)
 {
-    short int Check;
-    char Dot;
-    char Err;
-    size_t i;
-    size_t LenX;
+    if (X == NULL) {
+        return '1';  // Error for NULL input
+    }
     
-    if (X == NULL)
-        return '1';
+    uintptr_t LenX = aal_len(X);
+    if (LenX == 0) {
+        return '1';  // Error for empty string
+    }
     
-    LenX = aal_len(X);
-    Dot = '0';
-    Err = '0';
+    bool Dot = false;     // C99: use bool instead of char for clarity
+    char Err = '0';       // C99: initialize at declaration
+    char *P = X;          // C99: declare at point of first use
     
-    for (i = 0; i < LenX; i++)
-    {
-        Check = isdigit((unsigned char)X[i]);
+    while (*P != '\0') {
+        int Check = isdigit(X[P - X]);  // Use int for isdigit return
         
-        if (Check == 0)
-        {
-            if ((i == 0 && X[i] != '-') || 
-                (i > 0 && X[i] != '.') || 
-                (i == LenX - 1 && X[i] == '.') || 
-                (X[i] == '.' && Dot == '1'))
-            {
+        if (Check == 0) {
+            // Character is not a digit, check if it's valid
+            uintptr_t position = (uintptr_t)(P - X);
+            
+            if ((position == 0 && X[P - X] != '-') ||                    // First char must be digit or minus
+                (position > 0 && X[P - X] != '.') ||                     // Non-first chars must be digit or dot
+                (position == LenX - 1 && X[P - X] == '.') ||            // Last char cannot be dot
+                (X[P - X] == '.' && Dot)) {                             // Only one dot allowed
+                
                 Err = '1';
                 break;
             }
             
-            if (X[i] == '.')
-                Dot = '1';
+            if (X[P - X] == '.') {
+                Dot = true;
+            }
         }
+        
+        P++;  // Fixed: removed incorrect dereference operator
     }
     
     return Err;
 }
 
 /* AAL - Error Check (2 Arguments) */
-char aal_errchk_2(const char *A, const char *B)
+char aal_errchk_2(char *A, char *B)
 {
-    char Err;
+    // Check first argument
+    if (aal_errchk_1(A) == '1') {
+        return '1';  // Error in first argument
+    }
     
-    if (A == NULL || B == NULL)
-        return '1';
+    // Check second argument
+    if (aal_errchk_1(B) == '1') {
+        return '1';  // Error in second argument
+    }
     
-    Err = aal_errchk_1(A);
-    
-    if (Err == '0')
-        Err = aal_errchk_1(B);
-    
-    return Err;
+    return '0';  // Both arguments are valid
 }
 
 /* AAL - Memory Allocator (1 Argument) */
-char *aal_mem_alloc_num(size_t V)
+char *aal_mem_alloc_num(unsigned long V)
 {
-    if (V == 0)
-        return NULL;
+    if (V == 0) {
+        return NULL;  // Handle zero-size allocation request
+    }
     
-    return calloc(V + 1, sizeof(char));
+    char *alloc_mem = calloc(V, sizeof(char));  // Fixed: sizeof(char) instead of sizeof(alloc_mem)
+    
+    return alloc_mem;  // Returns NULL if allocation fails, valid pointer if successful
 }
 
 /* AAL - Memory Allocator (1 Argument) */
-char *aal_mem_alloc_1(const char *A)
+char *aal_mem_alloc_1(char *A)
 {
-    if (A == NULL)
-        return NULL;
+    if (A == NULL) {
+        return NULL;  // Handle NULL input
+    }
     
-    return aal_mem_alloc_num(aal_len(A));
+    uintptr_t len = aal_len(A);
+    if (len == (uintptr_t)-1) {  // aal_len returns -1 for NULL input
+        return NULL;
+    }
+    
+    // Allocate space for string length + null terminator
+    char *alloc_mem = calloc(len + 1, sizeof(char));  // Fixed: sizeof(char) and +1 for null terminator
+    
+    return alloc_mem;  // Returns NULL if allocation fails, valid pointer if successful
 }
 
 /* AAL - Memory Allocator (2 Arguments) */
-char *aal_mem_alloc_2(const char *A, const char *B)
+char *aal_mem_alloc_2(char *A, char *B)
 {
-    size_t LenA;
-    size_t LenB;
+    if (A == NULL || B == NULL) {
+        return NULL;  // Handle NULL inputs
+    }
     
-    if (A == NULL || B == NULL)
+    uintptr_t LenA = aal_len(A);
+    uintptr_t LenB = aal_len(B);
+    
+    // Handle error returns from aal_len
+    if (LenA == (uintptr_t)-1 || LenB == (uintptr_t)-1) {
         return NULL;
+    }
     
-    LenA = aal_len(A);
-    LenB = aal_len(B);
+    uintptr_t allocSize;  // C99: declare at point of first use
     
-    if (LenA >= LenB)
-        return aal_mem_alloc_num(LenA + 2);
-    else
-        return aal_mem_alloc_num(LenB + 2);
+    if (LenA >= LenB) {
+        allocSize = LenA + 2;  // Original logic: add 2 when A is longer
+    } else {
+        allocSize = LenB + 1;  // Fixed: add 1 for null terminator consistency
+    }
+    
+    char *alloc_mem = calloc(allocSize, sizeof(char));  // Use sizeof(char) for clarity
+    
+    return alloc_mem;  // Returns NULL if allocation fails, valid pointer if successful
 }
 
 /* AAL - Memory Deallocator */
 int aal_mem_dealloc(char *S)
 {
-    if (S != NULL)
-        free(S);
+    if (S == NULL) {
+        return 0;  // Return 0 for NULL pointer (no operation performed)
+    }
     
-    return 1;
+    free(S);
+    
+    return 1;  // Return 1 for successful deallocation
 }
 
 /* AAL - Addition */
-char *aal_add(const char *A, const char *B)
+char *aal_add(char *A, char *B)
 {
-    short int k;
-    char TmpA;
-    char TmpB;
-    char Flag;
-    size_t i;
-    char *S;
-    char *T;
-    char *SS;
-    char *CS;
-    char *Result;
-    fixlen newfxlnrs;
-    
-    if (A == NULL || B == NULL)
-        return NULL;
-    
-    S = aal_mem_alloc_num(3);
-    T = aal_mem_alloc_num(3);
-    SS = aal_mem_alloc_2(A, B);
-    CS = aal_mem_alloc_2(A, B);
-    Result = aal_mem_alloc_2(A, B);
-    
-    if (S == NULL || T == NULL || SS == NULL || CS == NULL || Result == NULL)
-    {
-        aal_mem_dealloc(S);
-        aal_mem_dealloc(T);
-        aal_mem_dealloc(SS);
-        aal_mem_dealloc(CS);
-        aal_mem_dealloc(Result);
+    if (A == NULL || B == NULL) {
         return NULL;
     }
     
-    Flag = '0';
-    
-    newfxlnrs = aal_fixlen(A, B);
-    if (newfxlnrs.Num1 == NULL || newfxlnrs.Num2 == NULL)
-    {
-        aal_mem_dealloc(S);
-        aal_mem_dealloc(T);
-        aal_mem_dealloc(SS);
-        aal_mem_dealloc(CS);
-        aal_mem_dealloc(Result);
+    // Get fixed-length versions of both numbers
+    fixlen newfxlnrs = aal_fixlen(A, B);
+    if (newfxlnrs.Num1 == NULL || newfxlnrs.Num2 == NULL) {
         return NULL;
     }
     
-    for (i = 0; i < newfxlnrs.FinLen; i++)
-    {
-        TmpA = newfxlnrs.Num1[newfxlnrs.FinLen - i - 1];
-        TmpB = newfxlnrs.Num2[newfxlnrs.FinLen - i - 1];
-        
-        if (i > 0)
-        {
-            k = ((TmpA - '0') + (TmpB - '0') + (CS[i - 1] - '0'));
-            
-            if (k > 9)
-            {
-                S[0] = '1';
-                S[1] = (k - 10) + '0';
-                S[2] = '\0';
-            }
-            else
-            {
-                S[0] = k + '0';
-                S[1] = '\0';
-            }
-        }
-        else
-        {
-            k = (TmpA - '0') + (TmpB - '0');
-            
-            if (k > 9)
-            {
-                S[0] = '1';
-                S[1] = (k - 10) + '0';
-                S[2] = '\0';
-            }
-            else
-            {
-                S[0] = k + '0';
-                S[1] = '\0';
-            }
-        }
-        
-        SS[i] = (S[1] != '\0') ? S[1] : S[0];
-        
-        if (k > 9)
-            CS[i] = '1';
-        else
-            CS[i] = '0';
-        
-        if (i == newfxlnrs.FinLen - 1)
-        {
-            if (Flag == '1')
-            {
-                T = aal_rvrs(S);
-                if (T != NULL)
-                {
-                    strncpy(&Result[i], T, 3);
-                    aal_mem_dealloc(T);
-                }
-            }
-            else
-            {
-                strncpy(&Result[i], S, 3);
-            }
-        }
-        else
-        {
-            Flag = '1';
-            Result[i] = SS[i];
-        }
+    uintptr_t len = newfxlnrs.FinLen;
+    
+    // Allocate memory for result (may need one extra digit for carry)
+    char *Result = aal_mem_alloc_num(len + 2);
+    if (Result == NULL) {
+        // Clean up allocated memory from aal_fixlen if needed
+        return NULL;
     }
     
-    if (Flag == '1')
-    {
-        char *Reversed = aal_rvrs(Result);
-        if (Reversed != NULL)
-        {
-            strcpy(Result, Reversed);
-            aal_mem_dealloc(Reversed);
-        }
+    int carry = 0;  // C99: use int for arithmetic
+    uintptr_t resultPos = 0;
+    
+    // Process digits from right to left (least significant to most significant)
+    for (uintptr_t i = 0; i < len; i++) {  // C99: declare loop variable in for statement
+        // Get digits from right to left
+        char digitA = newfxlnrs.Num1[len - 1 - i];
+        char digitB = newfxlnrs.Num2[len - 1 - i];
+        
+        // Convert chars to integers and add with carry
+        int sum = (digitA - '0') + (digitB - '0') + carry;
+        
+        // Calculate new carry and digit
+        carry = sum / 10;
+        int digit = sum % 10;
+        
+        // Store digit in result (we'll reverse later)
+        Result[resultPos] = (char)(digit + '0');
+        resultPos++;
     }
     
-    aal_mem_dealloc(S);
-    aal_mem_dealloc(T);
-    aal_mem_dealloc(SS);
-    aal_mem_dealloc(CS);
+    // Handle final carry if present
+    if (carry > 0) {
+        Result[resultPos] = (char)(carry + '0');
+        resultPos++;
+    }
     
-    if (newfxlnrs.Bigger != '0' && newfxlnrs.Num1 != A && newfxlnrs.Num1 != B)
-        aal_mem_dealloc((char *)newfxlnrs.Num1);
-    if (newfxlnrs.Bigger != '0' && newfxlnrs.Num2 != A && newfxlnrs.Num2 != B)
-        aal_mem_dealloc((char *)newfxlnrs.Num2);
+    // Null terminate
+    Result[resultPos] = '\0';
     
-    return aal_clrizr(Result);
+    // Reverse the result since we built it backwards
+    char *ReversedResult = aal_rvrs(Result);
+    aal_mem_dealloc(Result);
+    
+    // Clean up memory allocated by aal_fixlen (if they're different from originals)
+    if (newfxlnrs.Num1 != A) {
+        aal_mem_dealloc(newfxlnrs.Num1);
+    }
+    if (newfxlnrs.Num2 != B) {
+        aal_mem_dealloc(newfxlnrs.Num2);
+    }
+    
+    // Clean up leading zeros and return
+    char *CleanResult = aal_clrizr(ReversedResult);
+    if (ReversedResult != CleanResult) {
+        aal_mem_dealloc(ReversedResult);
+    }
+    
+    return CleanResult;
 }
 
 /* AAL - Subtraction */
-char *aal_sub(const char *A, const char *B)
+char *aal_sub(char *A, char *B)
 {
-    short int k;
-    char TmpA;
-    char TmpB;
-    char Flag;
-    char Bigger;
-    size_t i;
-    char *S;
-    char *T;
-    char *SS;
-    char *CS;
-    char *Buffer;
-    char *Result;
-    fixlen newfxlnrs;
-    
-    if (A == NULL || B == NULL)
-        return NULL;
-    
-    S = aal_mem_alloc_num(3);
-    T = aal_mem_alloc_num(3);
-    SS = aal_mem_alloc_2(A, B);
-    CS = aal_mem_alloc_2(A, B);
-    Buffer = aal_mem_alloc_2(A, B);
-    Result = aal_mem_alloc_2(A, B);
-    
-    if (S == NULL || T == NULL || SS == NULL || CS == NULL || Buffer == NULL || Result == NULL)
-    {
-        aal_mem_dealloc(S);
-        aal_mem_dealloc(T);
-        aal_mem_dealloc(SS);
-        aal_mem_dealloc(CS);
-        aal_mem_dealloc(Buffer);
-        aal_mem_dealloc(Result);
+    if (A == NULL || B == NULL) {
         return NULL;
     }
     
-    Flag = '0';
-    Bigger = aal_cmp(A, B);
+    // Determine which number is bigger to handle sign
+    char Bigger = aal_cmp(A, B);
+    bool isNegative = false;
     
-    if (Bigger == '2')
-    {
-        char *Temp = aal_copy(B, 0);
-        if (Temp != NULL)
-        {
-            strcpy(Buffer, Temp);
-            aal_mem_dealloc(Temp);
-        }
-        Temp = aal_copy(A, 0);
-        if (Temp != NULL)
-        {
-            strcpy((char *)B, Temp);
-            aal_mem_dealloc(Temp);
-        }
-        strcpy((char *)A, Buffer);
+    char *minuend = A;    // Number to subtract from
+    char *subtrahend = B; // Number to subtract
+    
+    // If B > A, swap them and remember result should be negative
+    if (Bigger == '2') {
+        minuend = B;
+        subtrahend = A;
+        isNegative = true;
     }
     
-    newfxlnrs = aal_fixlen(A, B);
-    if (newfxlnrs.Num1 == NULL || newfxlnrs.Num2 == NULL)
-    {
-        aal_mem_dealloc(S);
-        aal_mem_dealloc(T);
-        aal_mem_dealloc(SS);
-        aal_mem_dealloc(CS);
-        aal_mem_dealloc(Buffer);
-        aal_mem_dealloc(Result);
+    // Get fixed-length versions of both numbers
+    fixlen newfxlnrs = aal_fixlen(minuend, subtrahend);
+    if (newfxlnrs.Num1 == NULL || newfxlnrs.Num2 == NULL) {
         return NULL;
     }
     
-    for (i = 0; i < newfxlnrs.FinLen; i++)
-    {
-        TmpA = newfxlnrs.Num1[newfxlnrs.FinLen - i - 1];
-        TmpB = newfxlnrs.Num2[newfxlnrs.FinLen - i - 1];
-        
-        if (i > 0)
-        {
-            if ((TmpA - '0') >= ((TmpB - '0') + (CS[i - 1] - '0')))
-            {
-                k = (TmpA - '0') - ((TmpB - '0') + (CS[i - 1] - '0'));
-                S[0] = k + '0';
-                S[1] = '\0';
-            }
-            else
-            {
-                k = (10 + (TmpA - '0')) - ((TmpB - '0') + (CS[i - 1] - '0'));
-                S[0] = '1';
-                S[1] = k + '0';
-                S[2] = '\0';
-            }
-        }
-        else
-        {
-            if ((TmpA - '0') >= (TmpB - '0'))
-            {
-                k = (TmpA - '0') - (TmpB - '0');
-                S[0] = k + '0';
-                S[1] = '\0';
-            }
-            else
-            {
-                k = (10 + (TmpA - '0')) - (TmpB - '0');
-                S[0] = '1';
-                S[1] = k + '0';
-                S[2] = '\0';
-            }
-        }
-        
-        SS[i] = (S[1] != '\0') ? S[1] : S[0];
-        
-        if (S[1] == '\0')
-            CS[i] = '0';
-        else
-            CS[i] = '1';
-        
-        if (i == newfxlnrs.FinLen - 1)
-        {
-            if (Flag == '1')
-            {
-                T = aal_rvrs(S);
-                if (T != NULL)
-                {
-                    strncpy(&Result[i], T, 3);
-                    aal_mem_dealloc(T);
-                }
-            }
-            else
-            {
-                strncpy(&Result[i], S, 3);
-            }
-        }
-        else
-        {
-            Flag = '1';
-            Result[i] = SS[i];
-        }
+    uintptr_t len = newfxlnrs.FinLen;
+    
+    // Allocate memory for result
+    char *Result = aal_mem_alloc_num(len + 1);
+    if (Result == NULL) {
+        return NULL;
     }
     
-    if (Flag == '1')
-    {
-        char *Reversed = aal_rvrs(Result);
-        if (Reversed != NULL)
-        {
-            strcpy(Result, Reversed);
-            aal_mem_dealloc(Reversed);
+    int borrow = 0;  // C99: use int for arithmetic
+    uintptr_t resultPos = 0;
+    
+    // Process digits from right to left (least significant to most significant)
+    for (uintptr_t i = 0; i < len; i++) {  // C99: declare loop variable in for statement
+        // Get digits from right to left
+        char digitA = newfxlnrs.Num1[len - 1 - i];
+        char digitB = newfxlnrs.Num2[len - 1 - i];
+        
+        // Convert chars to integers
+        int numA = (digitA - '0') - borrow;
+        int numB = (digitB - '0');
+        
+        int difference;
+        if (numA >= numB) {
+            difference = numA - numB;
+            borrow = 0;
+        } else {
+            difference = (10 + numA) - numB;
+            borrow = 1;
         }
+        
+        // Store digit in result (we'll reverse later if needed)
+        Result[resultPos] = (char)(difference + '0');
+        resultPos++;
     }
     
-    aal_mem_dealloc(S);
-    aal_mem_dealloc(T);
-    aal_mem_dealloc(SS);
-    aal_mem_dealloc(CS);
-    aal_mem_dealloc(Buffer);
+    // Null terminate
+    Result[resultPos] = '\0';
     
-    if (newfxlnrs.Bigger != '0' && newfxlnrs.Num1 != A && newfxlnrs.Num1 != B)
-        aal_mem_dealloc((char *)newfxlnrs.Num1);
-    if (newfxlnrs.Bigger != '0' && newfxlnrs.Num2 != A && newfxlnrs.Num2 != B)
-        aal_mem_dealloc((char *)newfxlnrs.Num2);
+    // Reverse the result since we built it backwards
+    char *ReversedResult = aal_rvrs(Result);
+    aal_mem_dealloc(Result);
     
-    return aal_clrizr(Result);
+    // Clean up leading zeros
+    char *CleanResult = aal_clrizr(ReversedResult);
+    if (ReversedResult != CleanResult) {
+        aal_mem_dealloc(ReversedResult);
+    }
+    
+    // Add negative sign if needed
+    char *FinalResult = CleanResult;
+    if (isNegative && aal_zrchk(CleanResult) != '1') {  // Don't make -0
+        FinalResult = aal_setmin(CleanResult);
+        aal_mem_dealloc(CleanResult);
+    }
+    
+    // Clean up memory allocated by aal_fixlen (if they're different from originals)
+    if (newfxlnrs.Num1 != minuend) {
+        aal_mem_dealloc(newfxlnrs.Num1);
+    }
+    if (newfxlnrs.Num2 != subtrahend) {
+        aal_mem_dealloc(newfxlnrs.Num2);
+    }
+    
+    return FinalResult;
 }
-
-/******************************************************************************/
