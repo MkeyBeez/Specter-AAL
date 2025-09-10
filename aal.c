@@ -90,7 +90,7 @@ char *aal_clrmin(const char *X)
         return aal_mem_alloc_num(0);
 
     if (X[0] != '-')
-        return (char *)X; /* preserve original behavior (no allocation) */
+        return (char *)X; // NOSONAR: legacy API returns input unchanged
 
     size_t len = strlen(X + 1); // NOSONAR - validated input, safe use
     char *out = aal_mem_alloc_num(len);
@@ -170,7 +170,7 @@ char *aal_clrizr(const char *X)
         }
     }
 
-    char *ret = aal_copy(X, (unsigned long)start);
+    char *ret = aal_copy(X, start); // removed redundant cast
     if (!ret)
         return NULL;
 
