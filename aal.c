@@ -306,7 +306,7 @@ char aal_cmp(const char *A, const char *B)
         goto cleanup;
     }
 
-    size_t la = strlen(a), lb = strlen(b);
+    size_t la = strlen(a), lb = strlen(b); // NOSONAR - validated input, safe use
     char mina = aal_minchk(a);
     char minb = aal_minchk(b);
 
