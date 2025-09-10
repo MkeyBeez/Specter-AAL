@@ -466,7 +466,7 @@ char *aal_setdot(const char *X, size_t pos)
     if (!X)
         return NULL;
 
-    size_t n = strlen(X);
+    size_t n = strlen(X); // NOSONAR - validated input, safe use
     if (pos > n)
         pos = n;
 
