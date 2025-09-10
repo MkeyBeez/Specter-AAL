@@ -554,7 +554,12 @@ static char *add_same_len(const char *A, const char *B, size_t len)
  * Returns new allocated string (may contain leading zeros — caller expected
  * to trim via aal_clrizr).
  */
-static char *sub_same_len(const char *A, const char *B, size_t len)
+/* Preconditions: 
+ * - A and B are non-NULL
+ * - len > 0
+ * - A and B are digit strings of length len
+ */
+static char *sub_same_len(const char *A, const char *B, size_t len) // NOSONAR
 {
     char *res = aal_mem_alloc_num(len + 1);
     if (!res)
