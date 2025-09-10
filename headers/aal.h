@@ -13,6 +13,9 @@
 #include <stdint.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stddef.h>
+
 
 /* AAL Header Tag */
 #ifndef __AAL_H__
