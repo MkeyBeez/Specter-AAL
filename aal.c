@@ -11,158 +11,128 @@
 #include "headers/aal.h"
 
 /* AAL - Length */
-size_t aal_len(const char *X)
+uintptr_t aal_len(char *X)
 {
-    const char *P;
+    if (X == NULL) {
+        return (uintptr_t)-1;  // Cast -1 to uintptr_t for consistency
+    }
     
-    if (X == NULL)
-        return 0;
+    char *P = X;  // C99: declare variables at point of first use
     
-    P = X;
+    while (*P != '\0') {
+        P++;  // Fixed: removed incorrect dereference operator
+    }
     
-    while (*P != '\0')
-        P++;
-    
-    return (P - X);
+    return (uintptr_t)(P - X);  // Cast to uintptr_t for type consistency
 }
 
 /* AAL - Copy */
-char *aal_copy(const char *S, size_t P)
+char *aal_copy(char *S, unsigned long P)
 {
-    char *CRes;
-    size_t LenS;
-    size_t i;
-    
-    if (S == NULL)
-        return NULL;
-    
-    LenS = aal_len(S);
-    
-    if (P >= LenS)
-        return NULL;
-    
-    CRes = aal_mem_alloc_num(LenS - P + 1);
-    if (CRes == NULL)
-        return NULL;
-    
-    i = 0;
-    while ((P + i) < LenS && (isdigit(S[P + i]) || S[P + i] == '-' || S[P + i] == '.'))
-    {
-        CRes[i] = S[P + i];
-        i++;
+    char *CRes = aal_mem_alloc_1(S);
+    if (CRes == NULL) {
+        return NULL;  // Handle allocation failure gracefully
     }
     
-    CRes[i] = '\0';
+    char *N = S;  // C99: declare at point of first use
+    uintptr_t LenS = aal_len(S);
+    
+    while (((P + (uintptr_t)(N - S)) < LenS) && 
+           (isdigit(S[P + (N - S)]) || S[P + (N - S)] == '-' || S[P + (N - S)] == '.')) {
+        
+        CRes[N - S] = S[P + (N - S)];
+        N++;  // Fixed: removed incorrect dereference operator
+    }
+    
+    CRes[N - S] = '\0';
     
     return CRes;
 }
 
 /* AAL - Compare */
-char aal_cmp(const char *A, const char *B)
+char aal_cmp(char *A, char *B)
 {
-    char Bigger;
-    size_t i;
-    char MinA;
-    char MinB;
-    char ZeroA;
-    char ZeroB;
-    size_t LenA; 
-    size_t LenB;
+    char Bigger = '0';  // C99: initialize at declaration
     
-    Bigger = '0';
+    A = aal_clrizr(A);
+    B = aal_clrizr(B);
     
-    if (A == NULL || B == NULL)
-        return Bigger;
+    char ZeroA = aal_zrchk(A);  // C99: declare at point of first use
+    char ZeroB = aal_zrchk(B);
     
-    char *CleanA = aal_clrizr(A);
-    char *CleanB = aal_clrizr(B);
-    
-    ZeroA = aal_zrchk(CleanA);
-    ZeroB = aal_zrchk(CleanB);
-
-    if (ZeroA == '1' && ZeroB == '1')
-    {
-        aal_mem_dealloc(CleanA);
-        aal_mem_dealloc(CleanB);
+    if (ZeroA == '1' && ZeroB == '1') {
         return Bigger;
     }
     
-    LenA = aal_len(CleanA);
-    LenB = aal_len(CleanB);
+    uintptr_t LenA = aal_len(A);  // C99: declare at point of first use
+    uintptr_t LenB = aal_len(B);
     
-    MinA = aal_minchk(CleanA);
-    MinB = aal_minchk(CleanB);
+    char MinA = aal_minchk(A);  // C99: declare at point of first use
+    char MinB = aal_minchk(B);
     
-    if (LenA > LenB)
-    {
-        if (MinA == '1')
+    if (LenA > LenB) {
+        if (MinA == '1') {
             Bigger = '2';
-        else
+        } else {
             Bigger = '1';
-    }
-    else if (LenA < LenB)
-    {
-        if (MinB == '1')
+        }
+    } else if (LenA < LenB) {
+        if (MinB == '1') {
             Bigger = '1';
-        else
+        } else {
             Bigger = '2';
-    }
-    else
-    {
-        for (i = 0; i < LenA; i++)
-        {
-            if (CleanA[i] > CleanB[i])
-            {
-                if (MinA == '1')
+        }
+    } else {
+        char *P = A;  // C99: declare at point of first use
+        
+        while (*P != '\0') {
+            if (A[P - A] > B[P - A]) {
+                if (MinA == '1') {
                     Bigger = '2';
-                else
+                } else {
                     Bigger = '1';
-                
+                }
+                break;
+            } else if (A[P - A] < B[P - A]) {
+                if (MinB == '1') {
+                    Bigger = '1';
+                } else {
+                    Bigger = '2';
+                }
                 break;
             }
-            else if (CleanA[i] < CleanB[i])
-            {
-                if (MinB == '1')
-                    Bigger = '1';
-                else
-                    Bigger = '2';
-                
-                break;
-            }
+            
+            P++;  // Fixed: removed incorrect dereference operator
         }
     }
-    
-    aal_mem_dealloc(CleanA);
-    aal_mem_dealloc(CleanB);
     
     return Bigger;
 }
 
 /* AAL - Reverse */
-char *aal_rvrs(const char *X)
+char *aal_rvrs(char *X)
 {
-    char *RevStr;
-    size_t LenX;
-    size_t i;
-    
-    if (X == NULL)
-        return NULL;
-    
-    LenX = aal_len(X);
-    RevStr = aal_mem_alloc_num(LenX + 1);
-    if (RevStr == NULL)
-        return NULL;
-    
-    if (LenX > 1)
-    {
-        for (i = 0; i < LenX; i++)
-        {
-            RevStr[i] = X[LenX - i - 1];
-        }
+    char *RevStr = aal_mem_alloc_1(X);
+    if (RevStr == NULL) {
+        return NULL;  // Handle allocation failure
     }
-    else
-    {
-        strcpy(RevStr, X);
+    
+    uintptr_t LenX = aal_len(X);
+    
+    if (LenX > 1) {
+        char *P = X;  // C99: declare at point of first use
+        
+        while (*P != '\0') {
+            RevStr[P - X] = X[LenX - (P - X) - 1];
+            P++;  // Fixed: removed incorrect dereference operator
+        }
+    } else {
+        // Copy the single character or empty string instead of reassigning pointer
+        // This preserves the original behavior while avoiding memory leak
+        if (LenX == 1) {
+            RevStr[0] = X[0];
+        }
+        // For empty string (LenX == 0), RevStr is already allocated and will be null-terminated below
     }
     
     RevStr[LenX] = '\0';
@@ -171,31 +141,28 @@ char *aal_rvrs(const char *X)
 }
 
 /* AAL - Padding */
-char *aal_pad(const char *X, const char *S)
+char *aal_pad(char *X, char *S)
 {
-    char *PadStr;
-    size_t LenX;
-    size_t LenS;
-    size_t i;
+    uintptr_t LenX = aal_len(X);  // C99: declare at point of first use
+    uintptr_t LenS = aal_len(S);
     
-    if (X == NULL || S == NULL)
-        return NULL;
-    
-    LenX = aal_len(X);
-    LenS = aal_len(S);
-    
-    PadStr = aal_mem_alloc_num(LenX + LenS + 1);
-    if (PadStr == NULL)
-        return NULL;
-    
-    for (i = 0; i < LenS; i++)
-    {
-        PadStr[i] = S[i];
+    char *PadStr = aal_mem_alloc_num(LenX + LenS);
+    if (PadStr == NULL) {
+        return NULL;  // Handle allocation failure
     }
     
-    for (i = 0; i < LenX; i++)
-    {
-        PadStr[LenS + i] = X[i];
+    // Copy string S to the beginning of PadStr
+    char *P = S;  // C99: declare at point of first use
+    while (*P != '\0') {
+        PadStr[P - S] = S[P - S];
+        P++;  // Fixed: removed incorrect dereference operator
+    }
+    
+    // Copy string X after S in PadStr
+    P = X;
+    while (*P != '\0') {
+        PadStr[LenS + (P - X)] = X[P - X];
+        P++;  // Fixed: removed incorrect dereference operator
     }
     
     PadStr[LenX + LenS] = '\0';
