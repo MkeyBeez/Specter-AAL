@@ -5,12 +5,6 @@
  ****************************************************************************/
 
 #include "headers/aal.h"
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-
 /*
  * Notes on refactor:
  * - Keep original public API and semantics but make implementations safer,
