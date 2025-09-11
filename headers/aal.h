@@ -34,6 +34,21 @@ typedef struct rdfloutres
     char *Num2;
 } rdflout;
 
+// Updated function declarations
+bool aal_zrchk(char *X);
+bool aal_minchk(char *X);  
+bool aal_errchk_1(char *X);
+bool aal_errchk_2(char *A, char *B);
+
+// New comparison enum and function
+typedef enum {
+    CMP_EQUAL = 0,
+    CMP_A_GREATER = 1, 
+    CMP_B_GREATER = 2
+} aal_cmp_result;
+
+aal_cmp_result aal_cmp(char *A, char *B);
+
 /* Function Declarations */
 
 /* AAL - Length */
