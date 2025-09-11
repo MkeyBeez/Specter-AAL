@@ -478,30 +478,30 @@ rdflout aal_rdfl(const char *Z)
     rdflout locrdflout = {0};  // C99: initialize struct to zero
     
     if (Z == NULL) {
-        locrdflout.Num1 = "ERROR";
-        locrdflout.Num2 = "ERROR";
+        locrdflout.num1 = "ERROR";
+        locrdflout.num2 = "ERROR";
         return locrdflout;
     }
     
     FILE *FP = fopen(Z, "r");  // C99: declare at point of first use
     if (FP == NULL) {
-        locrdflout.Num1 = "ERROR";
-        locrdflout.Num2 = "ERROR";
+        locrdflout.num1 = "ERROR";
+        locrdflout.num2 = "ERROR";
         return locrdflout;
     }
     
     // Get file size
     if (fseek(FP, 0, SEEK_END) != 0) {
-        locrdflout.Num1 = "ERROR";
-        locrdflout.Num2 = "ERROR";
+        locrdflout.num1 = "ERROR";
+        locrdflout.num2 = "ERROR";
         fclose(FP);
         return locrdflout;
     }
     
     long flsz = ftell(FP);  // Use long for ftell return type
     if (flsz < 0) {
-        locrdflout.Num1 = "ERROR";
-        locrdflout.Num2 = "ERROR";
+        locrdflout.num1 = "ERROR";
+        locrdflout.num2 = "ERROR";
         fclose(FP);
         return locrdflout;
     }
@@ -509,16 +509,16 @@ rdflout aal_rdfl(const char *Z)
     rewind(FP);
     
     if ((unsigned long)flsz < 3) {
-        locrdflout.Num1 = "ERROR";
-        locrdflout.Num2 = "ERROR";
+        locrdflout.num1 = "ERROR";
+        locrdflout.num2 = "ERROR";
         fclose(FP);
         return locrdflout;
     }
     
     char *FlStrm = aal_mem_alloc_num((unsigned long)flsz + 1);  // +1 for null terminator
     if (FlStrm == NULL) {
-        locrdflout.Num1 = "ERROR";
-        locrdflout.Num2 = "ERROR";
+        locrdflout.num1 = "ERROR";
+        locrdflout.num2 = "ERROR";
         fclose(FP);
         return locrdflout;
     }
@@ -527,8 +527,8 @@ rdflout aal_rdfl(const char *Z)
     FlStrm[file_res] = '\0';  // Null terminate the string
     
     if (file_res == 0) {
-        locrdflout.Num1 = "ERROR";
-        locrdflout.Num2 = "ERROR";
+        locrdflout.num1 = "ERROR";
+        locrdflout.num2 = "ERROR";
         aal_mem_dealloc(FlStrm);
         fclose(FP);
         return locrdflout;
@@ -547,11 +547,11 @@ rdflout aal_rdfl(const char *Z)
     }
     
     if (!colonFound) {
-        locrdflout.Num1 = "ERROR";
-        locrdflout.Num2 = "ERROR";
+        locrdflout.num1 = "ERROR";
+        locrdflout.num2 = "ERROR";
     } else {
-        locrdflout.Num1 = aal_copy(FlStrm, 0);
-        locrdflout.Num2 = aal_copy(FlStrm, i + 1);
+        locrdflout.num1 = aal_copy(FlStrm, 0);
+        locrdflout.num2 = aal_copy(FlStrm, i + 1);
     }
     
     aal_mem_dealloc(FlStrm);
