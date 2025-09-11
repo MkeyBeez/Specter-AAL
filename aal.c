@@ -8,13 +8,6 @@
 /* Headers */
 #include "headers/aal.h"
 
-/* AAL - Compare - Updated to return proper comparison values */
-typedef enum {
-    CMP_EQUAL = 0,
-    CMP_A_GREATER = 1, 
-    CMP_B_GREATER = 2
-} aal_cmp_result;
-
 /* AAL - Length */
 uintptr_t aal_len(char *X)
 {
@@ -420,14 +413,6 @@ char *aal_clrdot(char *X)
     
     return IntNum;
 }
-
-/* Updated fixlen structure to use better field names */
-typedef struct {
-    char bigger;      // '0' = equal, '1' = A bigger, '2' = B bigger
-    char *num1;
-    char *num2;
-    uintptr_t finalLen;
-} fixlen;
 
 /* AAL - Fixate Numbers Length - Updated with cleaner logic */
 fixlen aal_fixlen(char *A, char *B)
