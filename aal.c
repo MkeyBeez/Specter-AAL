@@ -727,63 +727,6 @@ int aal_mem_dealloc(char *S)
     return 1;  // Return 1 for successful deallocation
 }
 
-/* AAL - Addition with Decimal Point Support */
-char *aal_add(char *A, char *B)
-{
-    if (A == NULL || B == NULL) {
-        return NULL;
-    }
-    
-    // Check for decimal points in both numbers
-    uintptr_t dotPosA = aal_dotchk(A);
-    uintptr_t dotPosB = aal_dotchk(B);
-    
-    // Determine if we're dealing with decimals
-    bool hasDecimalA = (dotPosA != (uintptr_t)-1);
-    bool hasDecimalB = (dotPosB != (uintptr_t)-1);
-    
-    // If neither has decimals, use the original integer logic
-    if (!hasDecimalA && !hasDecimalB) {
-        return aal_add_integers(A, B);  // Your existing logic
-    }
-    
-    // Handle decimal addition
-    uintptr_t lenA = aal_len(A);
-    uintptr_t lenB = aal_len(B);
-    
-    // Calculate decimal places for each number
-    uintptr_t decimalPlacesA = hasDecimalA ? (lenA - dotPosA - 1) : 0;
-    uintptr_t decimalPlacesB = hasDecimalB ? (lenB - dotPosB - 1) : 0;
-    uintptr_t maxDecimalPlaces = (decimalPlacesA > decimalPlacesB) ? decimalPlacesA : decimalPlacesB;
-    
-    // Create normalized versions (remove decimal points and pad with zeros)
-    char *normalizedA = normalize_for_decimal_arithmetic(A, maxDecimalPlaces, hasDecimalA);
-    char *normalizedB = normalize_for_decimal_arithmetic(B, maxDecimalPlaces, hasDecimalB);
-    
-    if (normalizedA == NULL || normalizedB == NULL) {
-        if (normalizedA) aal_mem_dealloc(normalizedA);
-        if (normalizedB) aal_mem_dealloc(normalizedB);
-        return NULL;
-    }
-    
-    // Perform integer addition on normalized numbers
-    char *integerResult = aal_add_integers(normalizedA, normalizedB);
-    
-    // Clean up normalized strings
-    aal_mem_dealloc(normalizedA);
-    aal_mem_dealloc(normalizedB);
-    
-    if (integerResult == NULL) {
-        return NULL;
-    }
-    
-    // Insert decimal point back into result
-    char *finalResult = insert_decimal_point(integerResult, maxDecimalPlaces);
-    aal_mem_dealloc(integerResult);
-    
-    return finalResult;
-}
-
 /* Helper function: Normalize number for decimal arithmetic */
 char *normalize_for_decimal_arithmetic(char *num, uintptr_t targetDecimalPlaces, bool hasDecimal)
 {
@@ -952,6 +895,63 @@ char *aal_add_integers(char *A, char *B)
     }
     
     return CleanResult;
+}
+
+/* AAL - Addition with Decimal Point Support */
+char *aal_add(char *A, char *B)
+{
+    if (A == NULL || B == NULL) {
+        return NULL;
+    }
+    
+    // Check for decimal points in both numbers
+    uintptr_t dotPosA = aal_dotchk(A);
+    uintptr_t dotPosB = aal_dotchk(B);
+    
+    // Determine if we're dealing with decimals
+    bool hasDecimalA = (dotPosA != (uintptr_t)-1);
+    bool hasDecimalB = (dotPosB != (uintptr_t)-1);
+    
+    // If neither has decimals, use the original integer logic
+    if (!hasDecimalA && !hasDecimalB) {
+        return aal_add_integers(A, B);  // Your existing logic
+    }
+    
+    // Handle decimal addition
+    uintptr_t lenA = aal_len(A);
+    uintptr_t lenB = aal_len(B);
+    
+    // Calculate decimal places for each number
+    uintptr_t decimalPlacesA = hasDecimalA ? (lenA - dotPosA - 1) : 0;
+    uintptr_t decimalPlacesB = hasDecimalB ? (lenB - dotPosB - 1) : 0;
+    uintptr_t maxDecimalPlaces = (decimalPlacesA > decimalPlacesB) ? decimalPlacesA : decimalPlacesB;
+    
+    // Create normalized versions (remove decimal points and pad with zeros)
+    char *normalizedA = normalize_for_decimal_arithmetic(A, maxDecimalPlaces, hasDecimalA);
+    char *normalizedB = normalize_for_decimal_arithmetic(B, maxDecimalPlaces, hasDecimalB);
+    
+    if (normalizedA == NULL || normalizedB == NULL) {
+        if (normalizedA) aal_mem_dealloc(normalizedA);
+        if (normalizedB) aal_mem_dealloc(normalizedB);
+        return NULL;
+    }
+    
+    // Perform integer addition on normalized numbers
+    char *integerResult = aal_add_integers(normalizedA, normalizedB);
+    
+    // Clean up normalized strings
+    aal_mem_dealloc(normalizedA);
+    aal_mem_dealloc(normalizedB);
+    
+    if (integerResult == NULL) {
+        return NULL;
+    }
+    
+    // Insert decimal point back into result
+    char *finalResult = insert_decimal_point(integerResult, maxDecimalPlaces);
+    aal_mem_dealloc(integerResult);
+    
+    return finalResult;
 }
 
 
