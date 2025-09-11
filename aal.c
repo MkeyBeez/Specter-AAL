@@ -727,13 +727,181 @@ int aal_mem_dealloc(char *S)
     return 1;  // Return 1 for successful deallocation
 }
 
-/* AAL - Addition */
+/* AAL - Addition with Decimal Point Support */
 char *aal_add(char *A, char *B)
 {
     if (A == NULL || B == NULL) {
         return NULL;
     }
     
+    // Check for decimal points in both numbers
+    uintptr_t dotPosA = aal_dotchk(A);
+    uintptr_t dotPosB = aal_dotchk(B);
+    
+    // Determine if we're dealing with decimals
+    bool hasDecimalA = (dotPosA != (uintptr_t)-1);
+    bool hasDecimalB = (dotPosB != (uintptr_t)-1);
+    
+    // If neither has decimals, use the original integer logic
+    if (!hasDecimalA && !hasDecimalB) {
+        return aal_add_integers(A, B);  // Your existing logic
+    }
+    
+    // Handle decimal addition
+    uintptr_t lenA = aal_len(A);
+    uintptr_t lenB = aal_len(B);
+    
+    // Calculate decimal places for each number
+    uintptr_t decimalPlacesA = hasDecimalA ? (lenA - dotPosA - 1) : 0;
+    uintptr_t decimalPlacesB = hasDecimalB ? (lenB - dotPosB - 1) : 0;
+    uintptr_t maxDecimalPlaces = (decimalPlacesA > decimalPlacesB) ? decimalPlacesA : decimalPlacesB;
+    
+    // Create normalized versions (remove decimal points and pad with zeros)
+    char *normalizedA = normalize_for_decimal_arithmetic(A, maxDecimalPlaces, hasDecimalA);
+    char *normalizedB = normalize_for_decimal_arithmetic(B, maxDecimalPlaces, hasDecimalB);
+    
+    if (normalizedA == NULL || normalizedB == NULL) {
+        if (normalizedA) aal_mem_dealloc(normalizedA);
+        if (normalizedB) aal_mem_dealloc(normalizedB);
+        return NULL;
+    }
+    
+    // Perform integer addition on normalized numbers
+    char *integerResult = aal_add_integers(normalizedA, normalizedB);
+    
+    // Clean up normalized strings
+    aal_mem_dealloc(normalizedA);
+    aal_mem_dealloc(normalizedB);
+    
+    if (integerResult == NULL) {
+        return NULL;
+    }
+    
+    // Insert decimal point back into result
+    char *finalResult = insert_decimal_point(integerResult, maxDecimalPlaces);
+    aal_mem_dealloc(integerResult);
+    
+    return finalResult;
+}
+
+/* Helper function: Normalize number for decimal arithmetic */
+char *normalize_for_decimal_arithmetic(char *num, uintptr_t targetDecimalPlaces, bool hasDecimal)
+{
+    if (num == NULL) return NULL;
+    
+    char *result;
+    
+    if (!hasDecimal) {
+        // No decimal point, just pad with zeros at the end
+        uintptr_t originalLen = aal_len(num);
+        result = aal_mem_alloc_num(originalLen + targetDecimalPlaces + 1);
+        if (result == NULL) return NULL;
+        
+        strcpy(result, num);
+        // Pad with zeros
+        for (uintptr_t i = 0; i < targetDecimalPlaces; i++) {
+            result[originalLen + i] = '0';
+        }
+        result[originalLen + targetDecimalPlaces] = '\0';
+    } else {
+        // Has decimal point, remove it and pad as needed
+        char *withoutDot = aal_clrdot(num);
+        if (withoutDot == NULL) return NULL;
+        
+        uintptr_t dotPos = aal_dotchk(num);
+        uintptr_t originalLen = aal_len(num);
+        uintptr_t currentDecimalPlaces = originalLen - dotPos - 1;
+        
+        if (currentDecimalPlaces >= targetDecimalPlaces) {
+            // Already has enough decimal places, just remove dot
+            result = withoutDot;
+        } else {
+            // Need to pad with zeros
+            uintptr_t paddingNeeded = targetDecimalPlaces - currentDecimalPlaces;
+            uintptr_t withoutDotLen = aal_len(withoutDot);
+            
+            result = aal_mem_alloc_num(withoutDotLen + paddingNeeded + 1);
+            if (result == NULL) {
+                aal_mem_dealloc(withoutDot);
+                return NULL;
+            }
+            
+            strcpy(result, withoutDot);
+            // Pad with zeros
+            for (uintptr_t i = 0; i < paddingNeeded; i++) {
+                result[withoutDotLen + i] = '0';
+            }
+            result[withoutDotLen + paddingNeeded] = '\0';
+            
+            aal_mem_dealloc(withoutDot);
+        }
+    }
+    
+    return result;
+}
+
+/* Helper function: Insert decimal point into integer result */
+char *insert_decimal_point(char *intResult, uintptr_t decimalPlaces)
+{
+    if (intResult == NULL || decimalPlaces == 0) {
+        // No decimal places needed, return copy of integer result
+        if (intResult == NULL) return NULL;
+        uintptr_t len = aal_len(intResult);
+        char *result = aal_mem_alloc_num(len + 1);
+        if (result != NULL) {
+            strcpy(result, intResult);
+        }
+        return result;
+    }
+    
+    uintptr_t intLen = aal_len(intResult);
+    
+    if (intLen <= decimalPlaces) {
+        // Need to pad with leading zeros
+        uintptr_t zerosNeeded = decimalPlaces - intLen + 1; // +1 for the leading zero before decimal
+        char *result = aal_mem_alloc_num(intLen + zerosNeeded + 2); // +1 for dot, +1 for null
+        if (result == NULL) return NULL;
+        
+        result[0] = '0';
+        result[1] = '.';
+        
+        // Add padding zeros
+        for (uintptr_t i = 0; i < zerosNeeded - 1; i++) {
+            result[2 + i] = '0';
+        }
+        
+        // Add the actual digits
+        strcpy(result + 1 + zerosNeeded, intResult);
+        
+        return result;
+    } else {
+        // Insert decimal point within the number
+        uintptr_t dotPosition = intLen - decimalPlaces;
+        char *result = aal_mem_alloc_num(intLen + 2); // +1 for dot, +1 for null
+        if (result == NULL) return NULL;
+        
+        // Copy integer part
+        for (uintptr_t i = 0; i < dotPosition; i++) {
+            result[i] = intResult[i];
+        }
+        
+        // Insert decimal point
+        result[dotPosition] = '.';
+        
+        // Copy fractional part
+        for (uintptr_t i = dotPosition; i < intLen; i++) {
+            result[i + 1] = intResult[i];
+        }
+        
+        result[intLen + 1] = '\0';
+        
+        return result;
+    }
+}
+
+/* Integer-only addition */
+char *aal_add_integers(char *A, char *B)
+{
     // Get fixed-length versions of both numbers
     fixlen newfxlnrs = aal_fixlen(A, B);
     if (newfxlnrs.Num1 == NULL || newfxlnrs.Num2 == NULL) {
@@ -745,53 +913,39 @@ char *aal_add(char *A, char *B)
     // Allocate memory for result (may need one extra digit for carry)
     char *Result = aal_mem_alloc_num(len + 2);
     if (Result == NULL) {
-        // Clean up allocated memory from aal_fixlen if needed
         return NULL;
     }
     
-    int carry = 0;  // C99: use int for arithmetic
+    int carry = 0;
     uintptr_t resultPos = 0;
     
-    // Process digits from right to left (least significant to most significant)
-    for (uintptr_t i = 0; i < len; i++) {  // C99: declare loop variable in for statement
-        // Get digits from right to left
+    // Process digits from right to left
+    for (uintptr_t i = 0; i < len; i++) {
         char digitA = newfxlnrs.Num1[len - 1 - i];
         char digitB = newfxlnrs.Num2[len - 1 - i];
         
-        // Convert chars to integers and add with carry
         int sum = (digitA - '0') + (digitB - '0') + carry;
-        
-        // Calculate new carry and digit
         carry = sum / 10;
         int digit = sum % 10;
         
-        // Store digit in result (we'll reverse later)
         Result[resultPos] = (char)(digit + '0');
         resultPos++;
     }
     
-    // Handle final carry if present
     if (carry > 0) {
         Result[resultPos] = (char)(carry + '0');
         resultPos++;
     }
     
-    // Null terminate
     Result[resultPos] = '\0';
     
-    // Reverse the result since we built it backwards
+    // Reverse and clean up
     char *ReversedResult = aal_rvrs(Result);
     aal_mem_dealloc(Result);
     
-    // Clean up memory allocated by aal_fixlen (if they're different from originals)
-    if (newfxlnrs.Num1 != A) {
-        aal_mem_dealloc(newfxlnrs.Num1);
-    }
-    if (newfxlnrs.Num2 != B) {
-        aal_mem_dealloc(newfxlnrs.Num2);
-    }
+    if (newfxlnrs.Num1 != A) aal_mem_dealloc(newfxlnrs.Num1);
+    if (newfxlnrs.Num2 != B) aal_mem_dealloc(newfxlnrs.Num2);
     
-    // Clean up leading zeros and return
     char *CleanResult = aal_clrizr(ReversedResult);
     if (ReversedResult != CleanResult) {
         aal_mem_dealloc(ReversedResult);
@@ -799,6 +953,7 @@ char *aal_add(char *A, char *B)
     
     return CleanResult;
 }
+
 
 /* AAL - Subtraction */
 char *aal_sub(char *A, char *B)
