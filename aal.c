@@ -691,21 +691,20 @@ BigFloat powBigFloat(BigFloat a, BigFloat b, int precision) {
 int main() {
     printf("Computing 22.5^7...\n");
     
-    // First, let's test with a much simpler case
-    printf("Testing simple case: 2^2 = ");
+    // Test just basic multiplication first
+    printf("Testing basic multiplication: 2 * 3 = ");
     BigFloat test_a = parseBigFloat("2");
-    BigFloat test_b = parseBigFloat("2");
+    BigFloat test_b = parseBigFloat("3");
     
-    // Test just integer power first
-    BigFloat test_r = powInt(test_a, 2);
+    BigFloat test_r = mulBigFloat(test_a, test_b);
     char* test_result = formatBigFloat(test_r);
     printf("%s\n", test_result);
     
-    // Clean up test
+    // Only free the digits, don't use freeBigFloat helper
     free(test_result);
-    freeBigFloat(&test_a);
-    freeBigFloat(&test_b);
-    freeBigFloat(&test_r);
+    free(test_a.digits);
+    free(test_b.digits);
+    free(test_r.digits);
 
     printf("Program completed successfully.\n");
     return 0;
