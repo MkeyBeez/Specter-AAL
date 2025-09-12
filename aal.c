@@ -17,7 +17,12 @@ typedef struct {
 
 // Strip leading zeros
 char* stripLeadingZeros(char* str) {
-    while (*str == '0' && *(str + 1) != '\0') str++;
+    char *p = str;
+    while (*p == '0' && *(p + 1) != '\0') p++;
+    if (p != str) {
+        size_t len = strlen(p);
+        memmove(str, p, len + 1); // include terminating NUL
+    }
     return str;
 }
 
