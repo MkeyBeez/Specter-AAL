@@ -6,6 +6,7 @@
 @echo "************************************"
 @echo.
 @echo "George Delaportas"
+@echo "Martin Tannhaus"
 @echo "Copyright (C) 2010-2025"
 @echo.
 @echo "Installing..."
