@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h> // need log for real exponentiation
 
 typedef struct {
     char *digits;   // only digits, no decimal point
@@ -20,6 +19,13 @@ typedef struct {
 char* stripLeadingZeros(char* str) {
     while (*str == '0' && *(str + 1) != '\0') str++;
     return str;
+}
+
+// Convert int to string
+char* intToStr(int n) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%d", n);
+    return strdup(buf);
 }
 
 // Reverse in place
@@ -563,28 +569,83 @@ BigFloat expBigFloat(BigFloat x, int precision) {
     return sum;
 }
 
+// lnTaylor: approximate ln(a) using Taylor series around 1
+// Requires a close to 1 (0.5 < a < 1.5)
+// precision = number of fractional digits
+BigFloat lnTaylor(BigFloat a, int precision) {
+    BigFloat one = parseBigFloat("1");
+    BigFloat x   = subBigFloat(a, one);   // x = a - 1
+
+    BigFloat term = x;      // current term in series
+    BigFloat sum  = x;      // accumulated sum
+    int sign = -1;
+
+    for (int k = 2; k < 200; k++) {  // 200 iterations max
+        // term = term * x
+        term = mulBigFloat(term, x);
+
+        // frac = term / k
+        char* kstr = intToStr(k);
+        BigFloat kbf = parseBigFloat(kstr);
+        free(kstr);
+
+        BigFloat frac = divBigFloat(term, kbf, precision);
+
+        if (sign > 0) {
+            sum = addBigFloat(sum, frac);
+        } else {
+            sum = subBigFloat(sum, frac);
+        }
+        sign = -sign;
+
+        // crude stopping criterion: if frac is ~0
+        if (strcmp(frac.digits, "0") == 0) break;
+    }
+
+    return sum;
+}
+
 // natural logarithm for BigFloat using newtons method
 BigFloat lnBigFloat(BigFloat a, int precision) {
-    // crude initial guess using double
-    double da = atof(formatBigFloat(a));
-    double guess = log(da);
+    // Reject non-positive
+    if (a.sign <= 0) {
+        fprintf(stderr, "ln of non-positive number!\n");
+        return parseBigFloat("0");
+    }
 
-    char buf[64];
-    snprintf(buf, sizeof(buf), "%.15f", guess);
-    BigFloat y = parseBigFloat(buf);
+    // Step 1: normalize a into m * 10^k
+    int k = strlen(a.digits) - a.scale;  // crude: position of decimal point
+    // turn a into m (scale-adjusted to ~1)
+    BigFloat pow10 = parseBigFloat("1");
+    for (int i=0; i<abs(k); i++) {
+        pow10 = mulBigFloat(pow10, parseBigFloat("10"));
+    }
+    BigFloat m;
+    if (k > 0) m = divBigFloat(a, pow10, precision);
+    else       m = mulBigFloat(a, pow10);
 
+    // Step 2: initial y = 0
+    BigFloat y = parseBigFloat("0");
+
+    // Step 3: Newton iterations
     for (int iter=0; iter < 20; iter++) {
         BigFloat ey = expBigFloat(y, precision);
-        BigFloat num = subBigFloat(ey, a);
+        BigFloat num = subBigFloat(ey, m);
         BigFloat den = ey;
         BigFloat frac = divBigFloat(num, den, precision);
         BigFloat newY = subBigFloat(y, frac);
-
         y = newY;
     }
 
-    return y;
+    // Step 4: add back k * ln(10)
+    BigFloat ln10 = lnTaylor(parseBigFloat("10"), precision);
+    BigFloat kbf  = parseBigFloat(intToStr(k)); // convert int k to BigFloat
+    BigFloat add  = mulBigFloat(kbf, ln10);
+    BigFloat res  = addBigFloat(y, add);
+
+    return res;
 }
+
 
 // Exponentiation for real exponents
 BigFloat powBigFloat(BigFloat a, BigFloat b, int precision) {
@@ -599,16 +660,13 @@ BigFloat powBigFloat(BigFloat a, BigFloat b, int precision) {
 
 // ---------- Demo ----------
 int main() {
-    BigFloat a = parseBigFloat("22.5");
-    BigFloat b = parseBigFloat("7");
+    BigFloat a = parseBigFloat("1.2"); // near 1
+    BigFloat ln_a = lnTaylor(a, 30);
 
-    BigFloat r = modBigFloat(a, b);
-    char* result = formatBigFloat(r);
-
-    printf("22.5 mod 7 = %s\n", result);
+    char* result = formatBigFloat(ln_a);
+    printf("ln(1.2) ≈ %s\n", result);
 
     free(result);
     return 0;
 }
-
 
