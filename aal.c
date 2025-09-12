@@ -546,7 +546,10 @@ BigFloat expBigFloat(BigFloat x, int precision) {
         // term = term * x / i
         term = mulBigFloat(term, x);
 
-        BigFloat denom = parseBigFloat("i"); // convert i to BigFloat
+        // Convert integer i to string, then to BigFloat
+        char i_str[32];
+        snprintf(i_str, sizeof(i_str), "%d", i);
+        BigFloat denom = parseBigFloat(i_str);
         term = divBigFloat(term, denom, precision);
 
         sum = addBigFloat(sum, term);
