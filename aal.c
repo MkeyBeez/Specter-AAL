@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h> // need log for real exponentiation
 
 typedef struct {
     char *digits;   // only digits, no decimal point
