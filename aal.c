@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h> //need logarithm for BigFloat Exponentiation
 
 typedef struct {
     char *digits;   // only digits, no decimal point
@@ -520,190 +519,14 @@ BigFloat modBigFloat(BigFloat a, BigFloat b) {
     return res;
 }
 
-// Helper function to free BigFloat memory
-void freeBigFloat(BigFloat* bf) {
-    if (bf && bf->digits) {
-        free(bf->digits);
-        bf->digits = NULL;
-    }
-}
-
-// Exponentiation by squaring for integer exponent >= 0
-BigFloat powInt(BigFloat base, long long exp) {
-    BigFloat result = parseBigFloat("1");
-    BigFloat b = base;
-    BigFloat temp_result, temp_b;
-
-    while (exp > 0) {
-        if (exp & 1) {
-            temp_result = mulBigFloat(result, b);
-            freeBigFloat(&result);
-            result = temp_result;
-        }
-        temp_b = mulBigFloat(b, b);
-        freeBigFloat(&b);
-        b = temp_b;
-        exp >>= 1;
-    }
-
-    freeBigFloat(&b);
-    return result;
-}
-
-// exp(BigFloat) using power series definition of exp function
-BigFloat expBigFloat(BigFloat x, int precision) {
-    BigFloat term = parseBigFloat("1");
-    BigFloat sum = parseBigFloat("1");
-    BigFloat temp_term, temp_sum;
-
-    for (int i = 1; i < precision * 10; i++) { // Increased iterations
-        // term = term * x / i
-        temp_term = mulBigFloat(term, x);
-        freeBigFloat(&term);
-        term = temp_term;
-
-        // Convert integer i to string, then to BigFloat
-        char i_str[32];
-        snprintf(i_str, sizeof(i_str), "%d", i);
-        BigFloat denom = parseBigFloat(i_str);
-        
-        temp_term = divBigFloat(term, denom, precision + 5); // Extra precision for intermediate calc
-        freeBigFloat(&term);
-        freeBigFloat(&denom);
-        term = temp_term;
-
-        temp_sum = addBigFloat(sum, term);
-        freeBigFloat(&sum);
-        sum = temp_sum;
-
-        // Check convergence - if term is very small, break
-        char* tstr = formatBigFloat(term);
-        int term_len = strlen(tstr);
-        int is_negligible = 0;
-        
-        if (strcmp(tstr, "0") == 0) {
-            is_negligible = 1;
-        } else if (term_len > precision && tstr[0] == '0' && tstr[1] == '.') {
-            // Check if we have enough leading zeros after decimal point
-            int leading_zeros = 0;
-            for (int j = 2; j < term_len && tstr[j] == '0'; j++) {
-                leading_zeros++;
-            }
-            if (leading_zeros > precision) {
-                is_negligible = 1;
-            }
-        }
-        
-        free(tstr);
-        
-        if (is_negligible) {
-            break;
-        }
-    }
-
-    freeBigFloat(&term);
-    return sum;
-}
-
-// natural logarithm for BigFloat using Newton's method
-BigFloat lnBigFloat(BigFloat a, int precision) {
-    // Check for invalid input
-    if (a.sign <= 0 || strcmp(a.digits, "0") == 0) {
-        fprintf(stderr, "Error: ln() undefined for non-positive numbers\n");
-        return parseBigFloat("0");
-    }
-
-    // crude initial guess using double
-    char* a_str = formatBigFloat(a);
-    double da = atof(a_str);
-    free(a_str);
-    
-    if (da <= 0) {
-        fprintf(stderr, "Error: ln() undefined for non-positive numbers\n");
-        return parseBigFloat("0");
-    }
-    
-    double guess = log(da);
-
-    char buf[64];
-    snprintf(buf, sizeof(buf), "%.15f", guess);
-    BigFloat y = parseBigFloat(buf);
-
-    for (int iter = 0; iter < 50; iter++) { // More iterations for convergence
-        BigFloat ey = expBigFloat(y, precision + 5); // Extra precision for intermediate calc
-        BigFloat num = subBigFloat(ey, a);
-        BigFloat frac = divBigFloat(num, ey, precision + 5);
-        BigFloat newY = subBigFloat(y, frac);
-
-        // Clean up intermediate results
-        freeBigFloat(&ey);
-        freeBigFloat(&num);
-        freeBigFloat(&frac);
-        freeBigFloat(&y);
-        
-        y = newY;
-        
-        // Check for convergence - if the change is very small, break
-        char* y_str = formatBigFloat(y);
-        char* frac_str = formatBigFloat(frac);
-        
-        // Simple convergence check - you might want to make this more sophisticated
-        if (strlen(frac_str) > precision + 10) {
-            free(y_str);
-            free(frac_str);
-            break;
-        }
-        
-        free(y_str);
-        free(frac_str);
-    }
-
-    return y;
-}
-
-// Exponentiation for real exponents
-BigFloat powBigFloat(BigFloat a, BigFloat b, int precision) {
-    // Handle special cases
-    if (strcmp(a.digits, "0") == 0) {
-        return parseBigFloat("0");
-    }
-    if (strcmp(b.digits, "0") == 0) {
-        return parseBigFloat("1");
-    }
-    if (strcmp(a.digits, "1") == 0) {
-        return parseBigFloat("1");
-    }
-
-    // pow(a,b) = exp(b * ln(a))
-    BigFloat lnA = lnBigFloat(a, precision + 5);
-    BigFloat prod = mulBigFloat(lnA, b);
-    BigFloat res = expBigFloat(prod, precision);
-
-    // Clean up intermediate results
-    freeBigFloat(&lnA);
-    freeBigFloat(&prod);
-
-    return res;
-}
-
-
 // ---------- Demo ----------
 int main() {
-    // Testing exponentiation
-    printf("Testing basic multiplication: 22.5 ^ 7 = ");
-    BigFloat test_a = parseBigFloat("22.5");
-    BigFloat test_b = parseBigFloat("7");
+    // Testing modulo
+    BigFloat a = parseBigFloat("22.5");
+    BigFloat b = parseBigFloat("7");
     
-    BigFloat test_r = powBigFloat(test_a, test_b, 2);
+    BigFloat test_r = modBigFloat(test_a, test_b);
     char* test_result = formatBigFloat(test_r);
     printf("%s\n", test_result);
-    
-    // Only free the digits, don't use freeBigFloat helper
-    free(test_result);
-    free(test_a.digits);
-    free(test_b.digits);
-    free(test_r.digits);
-
-    printf("Program completed successfully.\n");
     return 0;
 }
