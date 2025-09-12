@@ -369,6 +369,42 @@ char* divDigits(const char* a, const char* b, int precision) {
     return strdup(trimmed);
 }
 
+// Integer modulo: returns remainder string
+char* modDigits(const char* a, const char* b) {
+    if (strcmp(b, "0") == 0) {
+        fprintf(stderr, "Modulo by zero!\n");
+        return strdup("0");
+    }
+
+    char* prefix = calloc(2,1); prefix[0] = '\0';
+
+    for (int i=0; a[i]; i++) {
+        // bring down next digit
+        int plen = strlen(prefix);
+        char* tmp = calloc(plen+2,1);
+        strcpy(tmp,prefix);
+        tmp[plen] = a[i]; tmp[plen+1] = '\0';
+        free(prefix);
+        prefix = stripLeadingZeros(tmp);
+
+        // subtract divisor until remainder < b
+        while (compareDigits(prefix, b) >= 0) {
+            char* t = subDigits(prefix, b);
+            free(prefix);
+            prefix = t;
+        }
+    }
+
+    // if remainder empty, it's zero
+    if (*prefix == '\0') {
+        free(prefix);
+        return strdup("0");
+    }
+
+    return prefix; // remainder
+}
+
+
 // BigFloat multiplication
 BigFloat mulBigFloat(BigFloat a, BigFloat b) {
     BigFloat res;
@@ -432,19 +468,71 @@ BigFloat divBigFloat(BigFloat a, BigFloat b, int precision) {
     return res;
 }
 
+BigFloat modBigFloat(BigFloat a, BigFloat b) {
+    BigFloat res;
+
+    if (strcmp(b.digits, "0") == 0) {
+        fprintf(stderr, "Modulo by zero!\n");
+        res.digits = strdup("0");
+        res.sign = 1;
+        res.scale = 0;
+        return res;
+    }
+
+    // Align by making both integers
+    int maxScale = (a.scale > b.scale ? a.scale : b.scale);
+
+    // scale up a
+    char* da = strdup(a.digits);
+    for (int i=0; i < maxScale - a.scale; i++) {
+        char* tmp = calloc(strlen(da)+2,1);
+        strcpy(tmp, da);
+        strcat(tmp, "0");
+        free(da);
+        da = tmp;
+    }
+
+    // scale up b
+    char* db = strdup(b.digits);
+    for (int i=0; i < maxScale - b.scale; i++) {
+        char* tmp = calloc(strlen(db)+2,1);
+        strcpy(tmp, db);
+        strcat(tmp, "0");
+        free(db);
+        db = tmp;
+    }
+
+    // compute remainder
+    char* rem = modDigits(da, db);
+
+    res.digits = rem;
+    res.scale = maxScale;
+    res.sign = a.sign; // remainder takes dividend's sign
+
+    // normalize zero
+    if (strcmp(res.digits, "0") == 0) {
+        res.sign = 1;
+        res.scale = 0;
+    }
+
+    free(da);
+    free(db);
+    return res;
+}
 
 
 // ---------- Demo ----------
 int main() {
-    BigFloat a = parseBigFloat("22");
+    BigFloat a = parseBigFloat("22.5");
     BigFloat b = parseBigFloat("7");
 
-    BigFloat c = divBigFloat(a, b, 20); // 20 digits of precision
-    char* result = formatBigFloat(c);
+    BigFloat r = modBigFloat(a, b);
+    char* result = formatBigFloat(r);
 
-    printf("22/7 ≈ %s\n", result);
+    printf("22.5 mod 7 = %s\n", result);
 
     free(result);
     return 0;
 }
+
 
