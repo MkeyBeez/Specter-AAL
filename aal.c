@@ -525,7 +525,7 @@ int main() {
     BigFloat a = parseBigFloat("22.5");
     BigFloat b = parseBigFloat("7");
     
-    BigFloat test_r = modBigFloat(test_a, test_b);
+    BigFloat test_r = modBigFloat(a, b);
     char* test_result = formatBigFloat(test_r);
     printf("%s\n", test_result);
     return 0;
