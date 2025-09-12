@@ -274,12 +274,12 @@ char* mulKaratsuba(const char* x, const char* y) {
     char* Y0 = strdup(Y+half);
 
     // recursive calls
-    char* Z2 = karatsuba(X1, Y1);
-    char* Z0 = karatsuba(X0, Y0);
+    char* Z2 = mulKaratsuba(X1, Y1);
+    char* Z0 = mulKaratsuba(X0, Y0);
 
     char* X1pX0 = addDigits(X1, X0);
     char* Y1pY0 = addDigits(Y1, Y0);
-    char* P = karatsuba(X1pX0, Y1pY0);
+    char* P = mulKaratsuba(X1pX0, Y1pY0);
 
     // Z1 = P - Z2 - Z0
     char* tmp = subDigits(P, Z2);
