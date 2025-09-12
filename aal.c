@@ -404,82 +404,6 @@ char* modDigits(const char* a, const char* b) {
     return prefix; // remainder
 }
 
-// Exponentiation by squaring for integer exponent >= 0
-BigFloat powInt(BigFloat base, long long exp) {
-    BigFloat result = parseBigFloat("1");
-    BigFloat b = base;
-
-    while (exp > 0) {
-        if (exp & 1) {
-            result = mulBigFloat(result, b);
-        }
-        b = mulBigFloat(b, b);
-        exp >>= 1;
-    }
-
-    return result;
-}
-
-// exp(BigFloat) using power series definition of exp function
-BigFloat expBigFloat(BigFloat x, int precision) {
-    BigFloat term = parseBigFloat("1");
-    BigFloat sum  = parseBigFloat("1");
-    BigFloat k    = parseBigFloat("1");
-
-    for (int i = 1; i < precision*4; i++) {
-        // term = term * x / i
-        term = mulBigFloat(term, x);
-
-        BigFloat denom = parseBigFloat("i"); // convert i to BigFloat
-        term = divBigFloat(term, denom, precision);
-
-        sum = addBigFloat(sum, term);
-
-        // break if term is "0" at current precision
-        char* tstr = formatBigFloat(term);
-        if (strcmp(tstr, "0") == 0) {
-            free(tstr);
-            break;
-        }
-        free(tstr);
-    }
-
-    return sum;
-}
-
-// natural logarithm for BigFloat using newtons method
-BigFloat lnBigFloat(BigFloat a, int precision) {
-    // crude initial guess using double
-    double da = atof(formatBigFloat(a));
-    double guess = log(da);
-
-    char buf[64];
-    snprintf(buf, sizeof(buf), "%.15f", guess);
-    BigFloat y = parseBigFloat(buf);
-
-    for (int iter=0; iter < 20; iter++) {
-        BigFloat ey = expBigFloat(y, precision);
-        BigFloat num = subBigFloat(ey, a);
-        BigFloat den = ey;
-        BigFloat frac = divBigFloat(num, den, precision);
-        BigFloat newY = subBigFloat(y, frac);
-
-        y = newY;
-    }
-
-    return y;
-}
-
-// Exponentiation for real exponents
-BigFloat powBigFloat(BigFloat a, BigFloat b, int precision) {
-    // pow(a,b) = exp(b * ln(a))
-    BigFloat lnA = lnBigFloat(a, precision);
-    BigFloat prod = mulBigFloat(lnA, b);
-    BigFloat res  = expBigFloat(prod, precision);
-
-    return res;
-}
-
 // BigFloat multiplication
 BigFloat mulBigFloat(BigFloat a, BigFloat b) {
     BigFloat res;
@@ -592,6 +516,82 @@ BigFloat modBigFloat(BigFloat a, BigFloat b) {
 
     free(da);
     free(db);
+    return res;
+}
+
+// Exponentiation by squaring for integer exponent >= 0
+BigFloat powInt(BigFloat base, long long exp) {
+    BigFloat result = parseBigFloat("1");
+    BigFloat b = base;
+
+    while (exp > 0) {
+        if (exp & 1) {
+            result = mulBigFloat(result, b);
+        }
+        b = mulBigFloat(b, b);
+        exp >>= 1;
+    }
+
+    return result;
+}
+
+// exp(BigFloat) using power series definition of exp function
+BigFloat expBigFloat(BigFloat x, int precision) {
+    BigFloat term = parseBigFloat("1");
+    BigFloat sum  = parseBigFloat("1");
+    BigFloat k    = parseBigFloat("1");
+
+    for (int i = 1; i < precision*4; i++) {
+        // term = term * x / i
+        term = mulBigFloat(term, x);
+
+        BigFloat denom = parseBigFloat("i"); // convert i to BigFloat
+        term = divBigFloat(term, denom, precision);
+
+        sum = addBigFloat(sum, term);
+
+        // break if term is "0" at current precision
+        char* tstr = formatBigFloat(term);
+        if (strcmp(tstr, "0") == 0) {
+            free(tstr);
+            break;
+        }
+        free(tstr);
+    }
+
+    return sum;
+}
+
+// natural logarithm for BigFloat using newtons method
+BigFloat lnBigFloat(BigFloat a, int precision) {
+    // crude initial guess using double
+    double da = atof(formatBigFloat(a));
+    double guess = log(da);
+
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%.15f", guess);
+    BigFloat y = parseBigFloat(buf);
+
+    for (int iter=0; iter < 20; iter++) {
+        BigFloat ey = expBigFloat(y, precision);
+        BigFloat num = subBigFloat(ey, a);
+        BigFloat den = ey;
+        BigFloat frac = divBigFloat(num, den, precision);
+        BigFloat newY = subBigFloat(y, frac);
+
+        y = newY;
+    }
+
+    return y;
+}
+
+// Exponentiation for real exponents
+BigFloat powBigFloat(BigFloat a, BigFloat b, int precision) {
+    // pow(a,b) = exp(b * ln(a))
+    BigFloat lnA = lnBigFloat(a, precision);
+    BigFloat prod = mulBigFloat(lnA, b);
+    BigFloat res  = expBigFloat(prod, precision);
+
     return res;
 }
 
