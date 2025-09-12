@@ -334,8 +334,8 @@ BigFloat mulBigFloat(BigFloat a, BigFloat b) {
 
 // ---------- Demo ----------
 int main() {
-    BigFloat a = parseBigFloat("12.34");
-    BigFloat b = parseBigFloat("-0.56");
+    BigFloat a = parseBigFloat("1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.01");
+    BigFloat b = parseBigFloat("-100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
 
     BigFloat prod = mulBigFloat(a, b);
     char* result = formatBigFloat(prod);
