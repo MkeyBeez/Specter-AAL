@@ -1,3 +1,5 @@
+// Refactor of https://github.com/g0d/Specter-AAL/blob/main/aal.c by Martin Tannhaus 2025
+
 // Begin complete rewrite with sensible structs.
 
 #include <stdio.h>
@@ -204,12 +206,20 @@ BigFloat addBigFloat(BigFloat a, BigFloat b) {
     return res;
 }
 
+// BigFloat subtraction: a - b
+BigFloat subBigFloat(BigFloat a, BigFloat b) {
+    BigFloat negB = b;
+    negB.sign = -negB.sign;   // flip the sign of b
+    return addBigFloat(a, negB);
+}
+
+
 // ---------- Demo ----------
 int main() {
-    BigFloat a = parseBigFloat("---1");
-    BigFloat b = parseBigFloat("--1");
+    BigFloat a = parseBigFloat("100");
+    BigFloat b = parseBigFloat("1");
 
-    BigFloat sum = addBigFloat(a, b);
+    BigFloat sum = subBigFloat(a, b);
 
     char* result = formatBigFloat(sum);
     printf("Result: %s\n", result);
