@@ -1,5 +1,10 @@
-// Refactor of https://github.com/g0d/Specter-AAL/blob/main/aal.c by Martin Tannhaus 2025
-
+/******************************************************************************/
+/*                                   Specter                                  */
+/*                                 <<Console>>                                */
+/*                              George Delaportas                             */
+/*                            Copyright © 2010-2025                           */
+/*                         Refactored by Martin Tannhaus                      */
+/******************************************************************************/
 // Begin complete rewrite with sensible structs.
 
 #include <stdio.h>
