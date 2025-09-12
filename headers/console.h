@@ -1,32 +1,25 @@
-/******************************************************************************/
-/*                                   Specter                                  */
-/*                              <<Console Header>>                            */
-/*                              George Delaportas                             */
-/*                            Copyright © 2010-2025                           */
-/******************************************************************************/
+#ifndef __CONSOLE_H__
+#define __CONSOLE_H__
 
-
-
-/* Libraries*/
+/* Libraries */
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
-/* Console Header Tag */
-#define __CONSOLE_H__ 		1
-
-/* Headers */
-#ifndef __AAL_H__
+/* AAL Header */
+#ifndef AAL_H
 #include "aal.h"
 #endif
 
-#ifndef __SPECTER_H__
-#include "specter.h"
-#endif
-
-#ifndef __BENCHMARK_H__
-#include "benchmark.h"
-#endif
+/* Function declarations */
+long getCurrentTimeMs(void);
+void safeStringInput(char* buffer, int maxLen);
+void performOperation(int operation, const char* input1, const char* input2);
+void handleKeyboardInput(int operation);
+void handleFileInput(int operation);
 
 /* Main Function */
 int main(int argc, char *argv[]);
 
-/******************************************************************************/
+#endif /* __CONSOLE_H__ */
