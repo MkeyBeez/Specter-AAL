@@ -602,10 +602,10 @@ int main() {
     BigFloat a = parseBigFloat("22.5");
     BigFloat b = parseBigFloat("7");
 
-    BigFloat r = powBigFloat(a, b);
+    BigFloat r = powBigFloat(a, b, 20);
     char* result = formatBigFloat(r);
 
-    printf("22.5 mod 7 = %s\n", result);
+    printf("22.5 ** 7 = %s\n", result);
 
     free(result);
     return 0;
