@@ -213,16 +213,63 @@ BigFloat subBigFloat(BigFloat a, BigFloat b) {
     return addBigFloat(a, negB);
 }
 
+// Multiply two positive integers in string form
+char* mulDigits(const char* a, const char* b) {
+    int la = strlen(a), lb = strlen(b);
+    int len = la + lb;
+    int* tmp = calloc(len, sizeof(int));
+
+    // multiply each digit
+    for (int i = la-1; i >= 0; i--) {
+        for (int j = lb-1; j >= 0; j--) {
+            int prod = (a[i]-'0') * (b[j]-'0');
+            int p1 = i+j, p2 = i+j+1;
+            int sum = prod + tmp[p2];
+            tmp[p2] = sum % 10;
+            tmp[p1] += sum / 10;
+        }
+    }
+
+    // convert to string
+    char* res = calloc(len+1, 1);
+    int k = 0;
+    while (k < len && tmp[k] == 0) k++;  // skip leading zeros
+    if (k == len) {  // all zero
+        strcpy(res, "0");
+    } else {
+        for (int i = k; i < len; i++) res[i-k] = tmp[i] + '0';
+    }
+
+    free(tmp);
+    return res;
+}
+
+// BigFloat multiplication
+BigFloat mulBigFloat(BigFloat a, BigFloat b) {
+    BigFloat res;
+    res.sign = a.sign * b.sign;
+    res.scale = a.scale + b.scale;
+    res.digits = mulDigits(a.digits, b.digits);
+
+    // special case: result is "0"
+    if (strcmp(res.digits, "0") == 0) {
+        res.sign = 1;
+        res.scale = 0;
+    }
+
+    return res;
+}
+
 
 // ---------- Demo ----------
 int main() {
-    BigFloat a = parseBigFloat("100");
-    BigFloat b = parseBigFloat("1");
+    BigFloat a = parseBigFloat("12.34");
+    BigFloat b = parseBigFloat("-0.56");
 
-    BigFloat sum = subBigFloat(a, b);
+    BigFloat prod = mulBigFloat(a, b);
+    char* result = formatBigFloat(prod);
 
-    char* result = formatBigFloat(sum);
-    printf("Result: %s\n", result);
+    printf("Result: %s\n", result);  // should print -6.9104
 
     free(result);
     return 0;
