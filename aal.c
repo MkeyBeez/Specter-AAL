@@ -694,7 +694,7 @@ int main() {
     BigFloat test_a = parseBigFloat("22.5");
     BigFloat test_b = parseBigFloat("7");
     
-    BigFloat test_r = powBigFloat(test_a, test_b);
+    BigFloat test_r = powBigFloat(test_a, test_b, 2);
     char* test_result = formatBigFloat(test_r);
     printf("%s\n", test_result);
     
