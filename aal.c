@@ -1,6 +1,6 @@
 /******************************************************************************/
 /*                                   Specter                                  */
-/*                                 <<Console>>                                */
+/*                                 <<aal>>                                    */
 /*                              George Delaportas                             */
 /*                            Copyright © 2010-2025                           */
 /*                         Refactored by Martin Tannhaus                      */
