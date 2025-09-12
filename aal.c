@@ -258,7 +258,7 @@ char* mulKaratsuba(const char* x, const char* y) {
 
     // tune this cutoff length to determine when we use karatsuba
     if (n <= 32 || m <= 32) {
-        return mulDigits(x, y);  // your schoolbook O(n²)
+        return mulBase(x, y);  // your schoolbook O(n²)
     }
 
     // ensure equal length by padding
