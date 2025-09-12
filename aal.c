@@ -315,6 +315,60 @@ char* mulDigits(const char* a, const char* b) {
     return mulKaratsuba(a, b);  // dispatch to Karatsuba
 }
 
+// Integer division: returns quotient string (ignores remainder)
+// Computes floor(a / b), where a and b are non-negative digit strings
+// We have to specify the desired level of precision else the calculation will run on forever for repeating fractions etc.
+char* divDigits(const char* a, const char* b, int precision) {
+    if (strcmp(b, "0") == 0) {
+        fprintf(stderr, "Division by zero!\n");
+        return strdup("0");
+    }
+
+    int la = strlen(a);
+    char* quotient = calloc(la + precision + 2, 1); 
+    char* remainder = strdup("0");
+
+    // Work buffer for dividend digits
+    char* cur = calloc(la + precision + 2, 1);
+    strcpy(cur, a);
+
+    // Append extra zeros for fractional precision
+    for (int i=0; i<precision; i++) strcat(cur, "0");
+
+    int pos = 0;
+    char* prefix = calloc(2,1); prefix[0]='\0';
+
+    for (int i=0; cur[i]; i++) {
+        // bring down next digit
+        int plen = strlen(prefix);
+        char* tmp = calloc(plen+2,1);
+        strcpy(tmp,prefix);
+        tmp[plen]=cur[i]; tmp[plen+1]='\0';
+
+        free(prefix);
+        prefix = stripLeadingZeros(tmp);
+
+        // find quotient digit by trial
+        int q=0;
+        while (compareDigits(prefix,b) >= 0) {
+            char* t = subDigits(prefix,b);
+            free(prefix);
+            prefix = t;
+            q++;
+        }
+        quotient[pos++] = q+'0';
+    }
+
+    quotient[pos] = '\0';
+    free(prefix);
+    free(cur);
+    free(remainder);
+
+    // strip leading zeros
+    char* trimmed = stripLeadingZeros(quotient);
+    return strdup(trimmed);
+}
+
 // BigFloat multiplication
 BigFloat mulBigFloat(BigFloat a, BigFloat b) {
     BigFloat res;
@@ -331,17 +385,66 @@ BigFloat mulBigFloat(BigFloat a, BigFloat b) {
     return res;
 }
 
+BigFloat divBigFloat(BigFloat a, BigFloat b, int precision) {
+    BigFloat res;
+
+    if (strcmp(b.digits, "0") == 0) {
+        fprintf(stderr, "Division by zero!\n");
+        res.digits = strdup("0");
+        res.sign = 1;
+        res.scale = 0;
+        return res;
+    }
+
+    // Result sign
+    res.sign = a.sign * b.sign;
+
+    // Effective dividend and divisor are integers
+    // Align by shifting decimals: multiply dividend by 10^precision
+    int shift = precision + b.scale - a.scale;
+
+    char* dividend = strdup(a.digits);
+    for (int i=0; i<shift; i++) {
+        char* tmp = calloc(strlen(dividend)+2,1);
+        strcpy(tmp, dividend);
+        strcat(tmp, "0");
+        free(dividend);
+        dividend = tmp;
+    }
+
+    char* divisor = strdup(b.digits);
+
+    // perform integer division
+    char* q = divDigits(dividend, divisor, 0);
+
+    res.digits = q;
+    res.scale = precision;
+
+    // normalize if result is zero
+    if (strcmp(res.digits, "0") == 0) {
+        res.sign = 1;
+        res.scale = 0;
+    }
+
+    free(dividend);
+    free(divisor);
+
+    return res;
+}
+
+
 
 // ---------- Demo ----------
 int main() {
-    BigFloat a = parseBigFloat("1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.01");
-    BigFloat b = parseBigFloat("-100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    BigFloat a = parseBigFloat("22");
+    BigFloat b = parseBigFloat("7");
 
-    BigFloat prod = mulBigFloat(a, b);
-    char* result = formatBigFloat(prod);
+    BigFloat c = divBigFloat(a, b, 20); // 20 digits of precision
+    char* result = formatBigFloat(c);
 
-    printf("Result: %s\n", result);  // should print -6.9104
+    printf("22/7 ≈ %s\n", result);
 
     free(result);
     return 0;
 }
+
