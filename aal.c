@@ -114,7 +114,14 @@ char* formatBigFloat(BigFloat bf) {
     return res;
 }
 
-// ---------- Core Arithmetic ----------
+// Pads a number with leading zeros to a given length
+static char* padLeft(const char* s, int len) {
+    int ls = strlen(s);
+    char* res = calloc(len+1, 1);
+    memset(res, '0', len-ls);
+    strcpy(res+(len-ls), s);
+    return res;
+}
 
 // Compare two positive integers in string form
 int compareDigits(const char* a, const char* b) {
@@ -213,8 +220,8 @@ BigFloat subBigFloat(BigFloat a, BigFloat b) {
     return addBigFloat(a, negB);
 }
 
-// Multiply two positive integers in string form
-char* mulDigits(const char* a, const char* b) {
+// Base case used for numbers with less than karatsuba cutoff number of digits
+char* mulBase(const char* a, const char* b) {
     int la = strlen(a), lb = strlen(b);
     int len = la + lb;
     int* tmp = calloc(len, sizeof(int));
@@ -242,6 +249,70 @@ char* mulDigits(const char* a, const char* b) {
 
     free(tmp);
     return res;
+}
+
+// Karatsuba multiplication, recursive
+char* mulKaratsuba(const char* x, const char* y) {
+    int n = strlen(x);
+    int m = strlen(y);
+
+    // tune this cutoff length to determine when we use karatsuba
+    if (n <= 32 || m <= 32) {
+        return mulDigits(x, y);  // your schoolbook O(n²)
+    }
+
+    // ensure equal length by padding
+    int len = (n > m ? n : m);
+    if (len % 2 != 0) len++;
+    char* X = padLeft(x, len);
+    char* Y = padLeft(y, len);
+
+    int half = len/2;
+    char* X1 = strndup(X, half);
+    char* X0 = strdup(X+half);
+    char* Y1 = strndup(Y, half);
+    char* Y0 = strdup(Y+half);
+
+    // recursive calls
+    char* Z2 = karatsuba(X1, Y1);
+    char* Z0 = karatsuba(X0, Y0);
+
+    char* X1pX0 = addDigits(X1, X0);
+    char* Y1pY0 = addDigits(Y1, Y0);
+    char* P = karatsuba(X1pX0, Y1pY0);
+
+    // Z1 = P - Z2 - Z0
+    char* tmp = subDigits(P, Z2);
+    char* Z1 = subDigits(tmp, Z0);
+    free(tmp);
+
+    // assemble result = Z2*10^(2*half) + Z1*10^half + Z0
+    int shift1 = 2*half;
+    int shift2 = half;
+
+    char* Z2s = calloc(strlen(Z2)+shift1+1,1);
+    strcpy(Z2s, Z2);
+    for (int i=0; i<shift1; i++) strcat(Z2s, "0");
+
+    char* Z1s = calloc(strlen(Z1)+shift2+1,1);
+    strcpy(Z1s, Z1);
+    for (int i=0; i<shift2; i++) strcat(Z1s, "0");
+
+    char* sum1 = addDigits(Z2s, Z1s);
+    char* res  = addDigits(sum1, Z0);
+
+    // cleanup
+    free(X); free(Y);
+    free(X1); free(X0); free(Y1); free(Y0);
+    free(Z2); free(Z0); free(X1pX0); free(Y1pY0); free(P); free(Z1);
+    free(Z2s); free(Z1s); free(sum1);
+
+    return res;
+}
+
+// integration ? 
+char* mulDigits(const char* a, const char* b) {
+    return mulKaratsuba(a, b);  // dispatch to Karatsuba
 }
 
 // BigFloat multiplication
