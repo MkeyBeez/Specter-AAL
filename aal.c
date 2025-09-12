@@ -518,15 +518,3 @@ BigFloat modBigFloat(BigFloat a, BigFloat b) {
     free(db);
     return res;
 }
-
-// ---------- Demo ----------
-int main() {
-    // Testing modulo
-    BigFloat a = parseBigFloat("22.5");
-    BigFloat b = parseBigFloat("7");
-    
-    BigFloat test_r = modBigFloat(a, b);
-    char* test_result = formatBigFloat(test_r);
-    printf("%s\n", test_result);
-    return 0;
-}
