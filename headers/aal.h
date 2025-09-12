@@ -1,8 +1,8 @@
 /******************************************************************************/
 /*                                   Specter                                  */
-/*                   <<Abstract Arithmetics Library Header>>                  */
 /*                              George Delaportas                             */
 /*                            Copyright © 2010-2025                           */
+/*                         Refactored by Martin Tannhaus                      */
 /******************************************************************************/
 
 #ifndef AAL_H
