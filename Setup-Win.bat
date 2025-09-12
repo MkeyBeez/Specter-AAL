@@ -11,10 +11,10 @@
 @echo "Installing..."
 
 :: Compile
-gcc -std=gnu99 -pedantic -O3 -Wno-int-conversion -c console.c aal.c specter.c benchmark.c
+gcc -std=gnu99 -pedantic -O3 -c aal.c -lm
 
 :: Link
-gcc -W -o Specter console.o aal.o specter.o benchmark.o
+gcc -o specter console.c aal.c -lm
 
 :: Clean up
 del *.o
