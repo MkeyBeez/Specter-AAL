@@ -689,14 +689,12 @@ BigFloat powBigFloat(BigFloat a, BigFloat b, int precision) {
 
 // ---------- Demo ----------
 int main() {
-    printf("Computing 22.5^7...\n");
+    // Testing exponentiation
+    printf("Testing basic multiplication: 22.5 ^ 7 = ");
+    BigFloat test_a = parseBigFloat("22.5");
+    BigFloat test_b = parseBigFloat("7");
     
-    // Test just basic multiplication first
-    printf("Testing basic multiplication: 2 * 3 = ");
-    BigFloat test_a = parseBigFloat("2");
-    BigFloat test_b = parseBigFloat("3");
-    
-    BigFloat test_r = mulBigFloat(test_a, test_b);
+    BigFloat test_r = powBigFloat(test_a, test_b);
     char* test_result = formatBigFloat(test_r);
     printf("%s\n", test_result);
     
